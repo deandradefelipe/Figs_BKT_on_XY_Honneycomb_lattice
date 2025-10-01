@@ -1,0 +1,2191 @@
+# Configurações
+from google.colab import drive
+drive.mount('/content/drive')
+!apt-get install texlive-latex-recommended texlive-fonts-recommended texlive-latex-extra
+!apt-get install cm-super
+!apt-get install dvipng
+!sudo apt-get update -o Acquire::Check-Valid-Until=false
+!sudo apt-get install texlive-latex-extra
+#@title Bibliotecas
+#============================================================================# Bibliotecas
+# Matemáticas
+from numpy import array, std, mean, unique, linspace, argmin, argmax, argsort, log, sqrt, diag, pi, polyfit, arctan2, abs, savetxt, exp, delete, isnan, interp, maximum,loadtxt, min as npmin, random
+from scipy.interpolate import UnivariateSpline, interp1d,CubicSpline
+from scipy.optimize import curve_fit, brentq, minimize_scalar
+# Gráficas
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+from matplotlib.lines import Line2D
+from matplotlib.font_manager import FontProperties
+#@title Config. Latex
+#============================================================================# Config. Gráficos
+plt.rcParams['text.usetex'] = True
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['font.serif'] = ['Latin Modern Roman']
+plt.rcParams['font.size'] = 22
+
+#============================================================================# Colors and labels
+colors1 = ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#1f78b4']
+colors2 = ['#58c7aa', '#f1914f', '#a59bd1', '#f08abc', '#99c863', '#f4c73f', '#6baed6']
+colors3 = ['#116d5d', '#a34701', '#574d9a', '#b11e6f', '#4a7915', '#a17600', '#0b4a74']
+markers  = ['o', 'p', 'h', '^','v', '<', '>']
+
+legend_elements1 = [
+    Line2D([0], [0], marker='o', color='#116d5d', label='L $=6$', markerfacecolor='#1b9e77', markersize=10),
+    Line2D([0], [0], marker='p', color='#a34701', label='L $=12$', markerfacecolor='#d95f02', markersize=10),
+    Line2D([0], [0], marker='h', color='#574d9a', label='L $=24$', markerfacecolor='#7570b3', markersize=10),
+    Line2D([0], [0], marker='^', color='#b11e6f', label='L $=48$', markerfacecolor='#e7298a', markersize=10),
+    Line2D([0], [0], marker='v', color='#4a7915', label='L $=96$', markerfacecolor='#66a61e', markersize=10)
+    ]
+
+legend_elements2 = [
+    Line2D([0], [0], marker='o', color='#116d5d', label='L $=8$', markerfacecolor='#1b9e77', markersize=10),
+    Line2D([0], [0], marker='p', color='#a34701', label='L $=16$', markerfacecolor='#d95f02', markersize=10),
+    Line2D([0], [0], marker='h', color='#574d9a', label='L $=32$', markerfacecolor='#7570b3', markersize=10),
+    Line2D([0], [0], marker='^', color='#b11e6f', label='L $=64$', markerfacecolor='#e7298a', markersize=10),
+    Line2D([0], [0], marker='v', color='#4a7915', label='L $=128$', markerfacecolor='#66a61e', markersize=10)
+    ]
+#@title Temperatura (t)
+#============================================================================# Temperatura
+
+with open(f'/content/drive/MyDrive/honey/L96/h4.96.dat', 'r') as f:
+    t= [float(line.split()[0]) for line in f]
+    t = array(t)
+
+idx = argsort(t)
+temp = t[idx]
+x = linspace(min(t), max(t), 1000000)
+#============================================================================# Comentários
+# A temperatura está em ordem decrescente no arquivo, indo de 9.09 a 0.497.
+# Testes
+#@title Teste 1
+L = 128
+
+h4_t = []
+with open(f'/content/drive/MyDrive/honey/L{L}/h4.{L}.dat', 'r') as f:
+    h4_t.append([float(line.split()[1]) for line in f])
+h4_t = array(h4_t)
+dp4_t=[]
+with open(f'/content/drive/MyDrive/honey/L{L}/h4.{L}.dat', 'r') as f:
+    dp4_t.append([float(line.split()[2]) for line in f])
+dp4_t = array(dp4_t)
+
+spline_H4_t= UnivariateSpline(temp, h4_t[:,idx], w=1/dp4_t[:,idx]**2)
+
+
+fig, ax = plt.subplots(layout='constrained', figsize=(10,8))
+ax.set(xlabel=r'$t$', ylabel=r'H4',xlim=[0.49,1])
+ax.grid()
+ax.errorbar(t, h4_t[0], yerr=dp4_t[0],fmt='^', capsize=4, label='_nolegend_', alpha=1,color='black')
+
+ax.plot(x,spline_H4_t(x))
+
+
+plt.show()
+
+y = spline_H4_t(x)
+indice_minimo = argmin(y)
+t_min = x[indice_minimo]
+print("Valor mínimo de H4:", y[indice_minimo])
+print("T crítico:", t_min)
+#@title Teste 2
+L = 128
+
+h2_t = []
+with open(f'/content/drive/MyDrive/honey/L{L}/h2.{L}.dat', 'r') as f:
+    h2_t.append([float(line.split()[1]) for line in f])
+h2_t = array(h2_t)
+
+dp2_t=[]
+with open(f'/content/drive/MyDrive/honey/L{L}/h2.{L}.dat', 'r') as f:
+    dp2_t.append([float(line.split()[2]) for line in f])
+dp2_t = array(dp2_t)
+
+spline_H2_t= UnivariateSpline(temp, h2_t[:,idx], w=1/dp2_t[:,idx]**2)
+line = lambda x: ((2 * x) / pi)
+
+fig, ax = plt.subplots(layout='constrained', figsize=(10,8))
+ax.set(xlabel='T', ylabel=r'H2', xlim=[0.5,1],ylim=[-0.1,0.8])
+ax.grid()
+ax.errorbar(t, h2_t[0], yerr=dp2_t[0],fmt='^', capsize=4, label='_nolegend_', alpha=1,color='black')
+plt.plot(x, line(x),color='red')
+
+ax.plot(x,spline_H2_t(x))
+
+
+plt.show()
+
+intersection_x = brentq(lambda b: line(b) - spline_H2_t(b),0.6,0.7)
+print("Interseção x:", intersection_x)
+# Helicidade de Quarta Ordem
+#@title Helicidade de QUARTA ORDEM
+#============================================================================#
+H4 = []
+DP4=[]
+Redes = [8, 16, 32, 64, 128] #[8, 16, 32, 64, 128][6, 12, 24, 48, 96]
+for l in Redes:
+    h4 = []
+    with open(f'/content/drive/MyDrive/honey/L{l}/h4.{l}.dat', 'r') as f:
+        h4.append([float(line.split()[1]) for line in f])
+    h4 = array(h4)*4/3/sqrt(3)
+    dp4=[]
+    with open(f'/content/drive/MyDrive/honey/L{l}/h4.{l}.dat', 'r') as f:
+        dp4.append([float(line.split()[2]) for line in f])
+    dp4 = array(dp4)*4/3/sqrt(3)
+    H4.append(h4)
+    DP4.append(dp4)
+
+#savetxt("mediasH4.dat", H4, fmt="%.6f") #Para salvar todas as médias
+#@title GRÁFICO Helicidade de QUARTA ORDEM
+#============================================================================# Interpolação
+splines_H4 = []
+
+for i, (data, dp) in enumerate(zip(H4, DP4)):
+    y = data[0][idx]
+    err = dp[0][idx]
+
+    # Impede que o erro seja muito pequeno
+    err_safe = maximum(err, 0.01)  # 0.01 é um limite seguro, pode ajustar
+
+    w = 1 / err_safe**2
+    # Redução de peso conforme o índice
+    if i < 4:
+        w = w / 30  # redes L = 8, 16, 32, 64
+    else:
+        w = w / 10  # rede L = 128
+
+    # Define um parâmetro s que suaviza o suficiente
+    s = sum(err_safe**2) * 15
+
+    # Cria a spline suavizada
+    spline = UnivariateSpline(temp, y, w=w, s=s)
+
+    splines_H4.append(spline)
+#============================================================================# Gráfico
+fig, ax = plt.subplots(layout='constrained', figsize=(10,8))
+ax.set(xlabel=r'$T$', ylabel=r'$\langle \Upsilon_4 \rangle$',xlim=[0.5,1], ylim=[-2.,0])
+ax.legend(handles=legend_elements2)
+ax.grid()
+ax.axvline(x=1/sqrt(2), linestyle='--', color='firebrick')
+ax.text((1/sqrt(2)+0.02), -0.3, r'$T_c = \frac{1}{\sqrt{2}}$', fontsize=25, color='firebrick')
+
+for spline, data, dp, marker, color1, color2, color3 in zip(splines_H4, H4, DP4, markers, colors1, colors2, colors3):
+    ax.plot(x,spline(x),color=color3)
+    ax.errorbar(t, data[0], yerr=dp[0], capsize=4, label='_nolegend_', alpha=1, fmt=marker, color=color1, ecolor=color2, markeredgecolor=color3)
+
+plt.savefig("helicidade4m8.pdf")
+plt.show()
+#@title Helicidade de Quarta Ordem com WL
+WL_H4=[]
+for l in [6, 8, 12, 16, 24, 32, 48]:
+    wl_h4=[]
+    if l < 48:
+        with open(f'/content/drive/MyDrive/wl/L{l}/h4.{l}.dat', 'r') as f:
+            wl_h4.append([float(line.split()[1]) for line in f])
+    elif l == 48:
+        with open(f'/content/drive/MyDrive/wl/hel.48.02.dat', 'r') as f:
+            wl_h4.append([float(line.split()[2]) for line in f])
+
+    wl_h4 = array(wl_h4)
+    WL_H4.append(wl_h4)
+ #@title GRÁFICO Helicidade de QUARTA ORDEM com WL
+#============================================================================# Legenda
+linestyles = [
+    '-',        # linha contínua
+    '--',       # tracejada
+    '-.',       # traço-ponto
+    ':',        # pontilhada
+    (0, (3, 1)),      # traço longo com espaços curtos
+    (0, (3, 5, 1, 5)),# traço-ponto com mais espaçamento
+    (0, (6, 2, 3, 2))       # linha bem pontilhada (quase pixelada)
+]
+
+legend_elements_h4wl = [
+    Line2D([0], [0], color='#1b9e77', label='L $=6$', linestyle='-'),
+    Line2D([0], [0], color='#d95f02', label='L $=8$', linestyle='--'),
+    Line2D([0], [0], color='#7570b3', label='L $=12$', linestyle='-.'),
+    Line2D([0], [0], color='#e7298a', label='L $=16$', linestyle=':'),
+    Line2D([0], [0], color='#66a61e', label='L $=24$', linestyle=(0, (3, 1))),
+    Line2D([0], [0], color='#e6ab02', label='L $=32$', linestyle=(0, (3, 5, 1, 5))),
+    Line2D([0], [0], color='#1f78b4', label='L $=48$', linestyle=(0, (6, 2, 3, 2)))
+    ]
+#============================================================================# Gráfico
+with open(f'/content/drive/MyDrive/wl/L32/ee.32.dat', 'r') as f:
+    tWL = [float(line.split()[0]) for line in f]
+    tWL = array(tWL)
+
+fig, ax = plt.subplots(layout='constrained', figsize=(10,8))
+ax.set(xlabel=r'$T$', ylabel=r'$\langle \Upsilon_4 \rangle$',xlim=[0.4,1.6], ylim=[-0.175,0.01])
+ax.legend(handles=legend_elements_h4wl)
+ax.grid()
+
+ax.axvline(x=1/sqrt(2), linestyle='--', color='red')
+ax.text((1/sqrt(2)+0.02), -0.16, r'$T_c = \frac{1}{\sqrt{2}}$', fontsize=25, color='red')
+
+for wl, color, ls in zip(WL_H4, colors1, linestyles):
+    # Ensure tWL and wl[0] have the same length by truncating the longer array
+    min_len = min(len(tWL), len(wl[0]))
+    ax.plot(tWL[:min_len], wl[0][:min_len], color=color, linestyle=ls) #Truncate the larger to the smaller size
+
+plt.savefig("helicidade4oWL.pdf")
+plt.show()
+# Helicidade de Segunda Ordem
+#@title Helicidade de SEGUNDA Ordem com WL
+WL_H2=[]
+for l in [6, 8, 12, 16, 24, 32, 48]:
+    wl_h2=[]
+    if l < 48:
+        with open(f'/content/drive/MyDrive/wl/L{l}/h2.{l}.dat', 'r') as f:
+            wl_h2.append([float(line.split()[1]) for line in f])
+    elif l == 48:
+        with open(f'/content/drive/MyDrive/wl/hel.48.02.dat', 'r') as f:
+            wl_h2.append([float(line.split()[1]) for line in f])
+
+    wl_h2 = array(wl_h2)*4/3/sqrt(3)
+    WL_H2.append(wl_h2)
+ #@title GRÁFICO Helicidade de SEGUNDA ORDEM com WL
+#============================================================================# Legenda
+linestyles = [
+    '-',        # linha contínua
+    '--',       # tracejada
+    '-.',       # traço-ponto
+    ':',        # pontilhada
+    (0, (5, 1)),      # traço longo com espaços curtos
+    (0, (3, 5, 1, 5)),# traço-ponto com mais espaçamento
+    (0, (6, 2, 3, 2))       # linha bem pontilhada (quase pixelada)
+]
+
+legend_elements_h4wl = [
+    Line2D([0], [0], color='#1b9e77', label='L $=6$', linestyle='-'),
+    Line2D([0], [0], color='#d95f02', label='L $=8$', linestyle='--'),
+    Line2D([0], [0], color='#7570b3', label='L $=12$', linestyle='-.'),
+    Line2D([0], [0], color='#e7298a', label='L $=16$', linestyle=':'),
+    Line2D([0], [0], color='#66a61e', label='L $=24$', linestyle=(0, (5, 1))),
+    Line2D([0], [0], color='#e6ab02', label='L $=32$', linestyle=(0, (3, 5, 1, 5))),
+    Line2D([0], [0], color='#1f78b4', label='L $=48$', linestyle=(0, (6, 2, 3, 2))),
+    Line2D([0], [0], color='red', lw=2, label=r'$\frac{2T}{\pi}$')
+    ]
+#============================================================================# Gráfico
+with open(f'/content/drive/MyDrive/wl/L32/h2.32.dat', 'r') as f:
+    tWL = [float(line.split()[0]) for line in f]
+    tWL = array(tWL)
+
+fig, ax = plt.subplots(layout='constrained', figsize=(10,8))
+ax.set(xlabel=r'$T$', ylabel=r'$\langle \Upsilon \rangle$',xlim=[0.5,1.0], ylim=[-0.09,0.8])
+ax.legend(handles=legend_elements_h4wl)
+ax.grid()
+
+ax.axvline(x=1/sqrt(2), linestyle='--', color='firebrick')
+ax.text((1/sqrt(2)+0.02), 0.6, r'$T_c = \frac{1}{\sqrt{2}}$', fontsize=25, color='firebrick')
+
+for wl, color, ls in zip(WL_H2, colors1, linestyles):
+    # Ensure tWL and wl[0] have the same length by truncating the longer array
+    min_len = min(len(tWL), len(wl[0]))
+    ax.plot(tWL[:min_len], wl[0][:min_len], color=color, linestyle=ls) #Truncate the larger to the smaller size
+line = lambda x: ((2*x)/pi)
+plt.plot(tWL[:min_len], line(tWL[:min_len]),color='red')
+
+#plt.savefig("helicidade2oWL.pdf")
+plt.show()
+#@title Helicidade de SEGUNDA ORDEM
+#============================================================================#
+H2 = []
+DP2=[]
+Redes = [6, 8, 12, 16, 24, 32, 48] #[6, 12, 24, 48, 96][8, 16, 32, 64, 128][6, 8, 12, 16, 24, 32, 48]
+for l in Redes:
+    h2 = []
+    with open(f'/content/drive/MyDrive/honey/L{l}/h2.{l}.dat', 'r') as f:
+        h2.append([float(line.split()[1]) for line in f])
+    h2 = array(h2)*(4/(3*sqrt(3)))
+    dp2=[]
+    with open(f'/content/drive/MyDrive/honey/L{l}/h2.{l}.dat', 'r') as f:
+        dp2.append([float(line.split()[2]) for line in f])
+    dp2 = array(dp2)*(4/(3*sqrt(3)))
+    H2.append(h2)
+    DP2.append(dp2)
+
+
+ #@title GRÁFICO Helicidade de SEGUNDA ORDEM SA+WL
+#============================================================================# Interpolação
+splines_H2 = []
+for i, (data, dp) in enumerate(zip(H2, DP2)):
+    y = data[0][idx]
+    err = dp[0][idx]
+
+    # Impede que o erro seja muito pequeno
+    err_safe = maximum(err, 0.01)  # 0.01 é um limite seguro, pode ajustar
+
+    w = 1 / err_safe**2
+    # Redução de peso conforme o índice
+    if i < 3:
+        w = w / 280
+    elif i ==3:
+        w = w / 180
+    else:
+        w = w /120
+
+    # Define um parâmetro s que suaviza o suficiente
+    s = sum(err_safe**2) * 15
+
+    # Cria a spline suavizada
+    spline = UnivariateSpline(temp, y, w=w, s=s)
+
+    splines_H2.append(spline)
+
+line = lambda x: ((2*x)/pi)
+#============================================================================# Gráfico
+fig, ax = plt.subplots(layout='constrained', figsize=(10,8))
+ax.set(xlabel=r'$T$', ylabel=r'$\langle \Upsilon \rangle$',xlim=[0.5,1.0],ylim=[-0.2,0.9])
+
+# Legenda
+legend_elements_H2 = [
+    Line2D([0], [0], marker='o', color='#116d5d', label='L $=6$', markerfacecolor='#1b9e77', markersize=10),
+    Line2D([0], [0], marker='p', color='#a34701', label='L $=8$', markerfacecolor='#d95f02', markersize=10),
+    Line2D([0], [0], marker='h', color='#574d9a', label='L $=12$', markerfacecolor='#7570b3', markersize=10),
+    Line2D([0], [0], marker='^', color='#b11e6f', label='L $=16$', markerfacecolor='#e7298a', markersize=10),
+    Line2D([0], [0], marker='v', color='#4a7915', label='L $=24$', markerfacecolor='#66a61e', markersize=10),
+    Line2D([0], [0], marker='<', color='#a17600', label='L $=32$', markerfacecolor='#e6ab02', markersize=10),
+    Line2D([0], [0], marker='>', color='#0b4a74', label='L $=48$', markerfacecolor='#1f78b4', markersize=10),
+    Line2D([0], [0], color='red', lw=2, label=r'$\frac{2T}{\pi}$')
+    ]
+ax.legend(handles=legend_elements_H2, loc='lower left')
+ax.grid()
+
+# Tc teórico
+ax.axvline(x=1/sqrt(2), linestyle='--', color='firebrick')
+ax.text((1/sqrt(2)-0.05), 0.65, r'$T_c = \frac{1}{\sqrt{2}}$', fontsize=17, color='firebrick')
+
+# Plot principal
+for spline, data, dp, marker, color1, color2, color3 in zip(splines_H2, H2, DP2, markers, colors1, colors2, colors3):
+    ax.plot(x,spline(x),color=color3)
+    ax.errorbar(t, data[0], yerr=dp[0], capsize=4, label='_nolegend_', alpha=1, fmt=marker, color=color1, ecolor=color2, markeredgecolor=color3)
+plt.plot(x, line(x),color='red')
+
+# Add inset
+axins = ax.inset_axes([0.55, 0.55, 0.43, 0.43])
+axins.set(xlabel=r'$T$', ylabel=r'$\langle \Upsilon \rangle$',xlim=[0.5,1.0], ylim=[-0.09,0.8])
+axins.grid()
+axins.axvline(x=1/sqrt(2), linestyle='--', color='firebrick')
+axins.text(0.61, 0.65, r'$T_c = \frac{1}{\sqrt{2}}$', fontsize=14, color='firebrick')
+
+# Plot inset
+for wl, color, ls in zip(WL_H2, colors1, linestyles):
+    # Ensure tWL and wl[0] have the same length by truncating the longer array
+    min_len = min(len(tWL), len(wl[0]))
+    axins.plot(tWL[:min_len], wl[0][:min_len], color=color, linestyle=ls) #Truncate the larger to the smaller size
+axins.plot(tWL[:min_len], line(tWL[:min_len]),color='red')
+
+# Label inset
+axins.text(0.8, 0.4, 'L $= 6$', color='#116d5d', fontsize=18)
+axins.text(0.55, 0.10, 'L $= 48$', color='#0b4a74', fontsize=18)
+
+# Show & Save
+plt.savefig("helicidade2SArWL_plusWL.pdf")
+plt.show()
+# Finite-Size Scaling
+#@title Pontos da Temperatura Crítica para cada rede através de $\langle \Upsilon \rangle$ vs $2T/\pi$
+#============================================================================#
+
+redes = [6, 8, 12, 16, 24, 32, 48, 64, 96, 128] #
+TC_H2 = []
+DP_FSS_H2 = []
+
+fig, axes = plt.subplots(2, 5, figsize=(18, 8),layout='constrained', sharex=False, sharey=True)
+axes = axes.flatten()
+
+for i, l in enumerate(redes):
+    ax = axes[i]
+    # Load your data
+    data = loadtxt(f'/content/drive/MyDrive/honey/L{l}/h2.{l}.dat')
+    T = data[:, 0]
+    Y = data[:, 1]*4.0/3.0/sqrt(3.0)
+    Yerr = data[:, 2]*4.0/3.0/sqrt(3.0)
+
+    # Interpolate central value and error bounds
+    Y_upper = Y + Yerr
+    Y_lower = Y - Yerr
+
+    helicity_interp = interp1d(T, Y, kind='cubic')
+    helicity_upper_interp = interp1d(T, Y_upper, kind='cubic')
+    helicity_lower_interp = interp1d(T, Y_lower, kind='cubic')
+
+    # 2T/pi line
+    line_interp = lambda T: 2 * T / pi
+
+    # Functions for intersections
+    def f_mid(temp):
+        return helicity_interp(temp) - line_interp(temp)
+
+    def f_upper(temp):
+        return helicity_upper_interp(temp) - line_interp(temp)
+
+    def f_lower(temp):
+        return helicity_lower_interp(temp) - line_interp(temp)
+
+    # Automatically find intersection intervals by sign change
+    def find_bracket(f, T):
+        for i in range(len(T) - 1):
+            if f(T[i]) * f(T[i+1]) < 0:
+                return T[i], T[i+1]
+        raise ValueError("No intersection found for given curve.")
+
+    # Find intersection points
+    T_low, T_high = find_bracket(f_mid, T)
+    T_c = brentq(f_mid, T_low, T_high)
+    Y_c = helicity_interp(T_c)
+
+    T_low_u, T_high_u = find_bracket(f_upper, T)
+    T_c_upper = brentq(f_upper, T_low_u, T_high_u)
+
+    T_low_l, T_high_l = find_bracket(f_lower, T)
+    T_c_lower = brentq(f_lower, T_low_l, T_high_l)
+
+    TC_H2.append(T_c)
+    DP_FSS_H2.append((T_c_upper - T_c_lower)/2)
+
+
+    # Plotting
+    ax.errorbar(T, Y, yerr=Yerr, fmt='o', label='Helicity modulus', capsize=3)
+    T_dense = linspace(min(T), max(T), 500)
+    ax.plot(T_dense, 2*T_dense/pi, 'r--', label=r'$2T/\pi$')
+    ax.axvline(T_c, color='k', linestyle=':', label=f'$T_c = {T_c:.4f}$')
+    ax.fill_betweenx([0.0,0.65], T_c_lower, T_c_upper, color='gray', alpha=0.3,
+                      label=f'Confidence Interval: [{T_c_lower:.4f}, {T_c_upper:.4f}]')
+    ax.scatter(T_c, Y_c, color='black', zorder=5)
+    ax.set_title(f'L = {l}')
+    ax.legend(fontsize=8, loc='lower left')
+    ax.grid(True)
+    ax.set_xlim(0.5,0.8)
+    ax.set_ylim(0.0,0.65)
+
+fig.suptitle(r'$\langle \Upsilon \rangle$ vs $2T/\pi$ em função de $T$', fontsize=16)
+#plt.savefig("h2vs2Tpi.pdf")
+plt.show()
+# Resultados parciais (opcional)
+for i, l in enumerate(redes):
+    print(f"L = {l:3d} | Tc = {TC_H2[i]:.5f} ± {DP_FSS_H2[i]:.5f}")
+#@title Modelo baseado na expressão $ T(L) = T_c + \frac{a}{ln^2(bL)} $
+def fss_bkt(L, Tc, a, b):
+    return Tc + a / (log(L*b))**2
+
+#============================================================================# Ajuste dos parâmetros
+popt, pcov = curve_fit(
+    fss_bkt, redes, TC_H2,
+    sigma=DP_FSS_H2, absolute_sigma=True,
+    maxfev=10000)
+
+perr = sqrt(diag(pcov))
+Tc_fit, a_fit, b_fit = popt
+redes = array(redes)
+#============================================================================# Gráfico
+# Eixo x: ln²(bL) = (ln L + b)²
+x_fit = 1 / (log(redes * b_fit))**2
+
+x_plot = linspace(0.001, max(x_fit), 500)
+L_plot = (1 / b_fit) * exp(sqrt(1 / x_plot))
+y_plot = fss_bkt(L_plot, *popt)
+
+# Gráfico
+fig, ax = plt.subplots(layout='constrained')
+ax.errorbar(x_fit, TC_H2, yerr=DP_FSS_H2, fmt='o', capsize=4, color='black', label='Dados')
+ax.plot(x_plot, y_plot, color='firebrick', label='Ajuste FSS')
+
+ax.set(xlabel=r'$1/\ln^2(bL)$', ylabel=r'$T^*(L)$')
+ax.legend()
+ax.grid()
+plt.show()
+
+# Parâmetros ajustados
+print(f"Tc = {Tc_fit:.5f} ± {perr[0]:.5f}")
+print(f"a  = {a_fit:.5f} ± {perr[1]:.5f}")
+print(f"b  = {b_fit:.5f} ± {perr[2]:.5f}")
+
+#@title Modelo baseado na expressão $T(L) = T_c + a \frac{T_c}{ln^2(L+c)}$
+def fss_jian(L, Tc, a, c):
+    return Tc *( 1 + a / (log(L) + c)**2 )
+#============================================================================# Ajuste dos parâmetros
+popt, pcov = curve_fit(
+    fss_jian, redes, TC_H2,
+    sigma=DP_FSS_H2, absolute_sigma=True,
+    maxfev=10000)
+
+perr = sqrt(diag(pcov))
+TC_fit, a_fit, c_fit = popt
+redes = array(redes)
+#============================================================================# Gráfico
+# Eixo x: 1 / (log(L) + c)^2
+x_fit = 1 / (log(redes) + c_fit)**2
+
+# Curva ajustada
+x_plot = linspace(0.0001, max(x_fit), 500)
+L_plot = exp(sqrt(1 / x_plot) - c_fit)
+y_plot = fss_jian(L_plot, *popt)
+
+# Gráfico
+fig, ax = plt.subplots(layout='constrained')
+ax.errorbar(x_fit, TC_H2, yerr=DP_FSS_H2, fmt='o', capsize=4, color='black', label='Dados')
+ax.plot(x_plot, y_plot, color='green', label='Ajuste Jiang')
+
+ax.set(xlabel=r'$1/(\log L + c)^2$', ylabel=r'$T^*(L)$')
+ax.legend()
+ax.grid()
+plt.show()
+
+#============================================================================# Parâmetros ajustados
+print(f"Tc = {TC_fit:.5f} ± {perr[0]:.5f}")
+print(f"a  = {a_fit:.5f} ± {perr[1]:.5f}")
+print(f"c  = {c_fit:.5f} ± {perr[2]:.5f}")
+#@title FSS: ${T_c}_{\langle \Upsilon \rangle}$ vs $\frac{1}{L}$
+#============================================================================#
+lnL2 = [( 1 / L ) for L in redes]
+#============================================================================#
+# Gráficos
+fig, ax = plt.subplots(layout='constrained')
+ax.errorbar(lnL2, TC_H2, yerr = DP_FSS_H2, linewidth=2, capsize=4, fmt='o', alpha=0.9,color='black')
+ax.plot(lnL2, TC_H2, linestyle='--')
+ax.set(xlabel=r'$\frac{1}{L}$', ylabel=r'$T_c$')
+ax.grid()
+#plt.savefig("FSS_H2.pdf")
+plt.show()
+#============================================================================#
+#@title Pontos da Temperatura Crítica para cada rede através de $\langle \Upsilon_4 \rangle$
+TC_H4 = []
+DP_FSS_H4 = []
+redes = [6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
+
+fig, axes = plt.subplots(2, 5, figsize=(18, 8),layout='constrained',  sharex=False, sharey=True)
+axes = axes.flatten()
+
+for i, l in enumerate(redes):
+    # Load and restrict the data
+    data = loadtxt(f'/content/drive/MyDrive/honey/L{l}/h4.{l}.dat')
+    data = data[argsort(data[:, 0])]
+    _, unique_indices = unique(data[:, 0], return_index=True)
+    data = data[unique_indices]
+
+    # Restrict x range
+    mask = (data[:, 0] >= 0.5) & (data[:, 0] <= 1.0)
+    data = data[mask]
+    x = data[:, 0]
+    y = data[:, 1]*4.0/3.0/sqrt(3.0)
+
+    # Original spline and minimum
+    spline = CubicSpline(x, y)
+    res = minimize_scalar(spline, bounds=(x.min(), x.max()), method='bounded')
+    xmin, ymin = res.x, res.fun
+
+    # Bootstrap
+    n_bootstrap = 1000
+    xmins = []
+    ymins = []
+
+    rng = random.default_rng()
+
+    for _ in range(n_bootstrap):
+        indices = rng.integers(0, len(x), size=len(x))
+        x_sample = x[indices]
+        y_sample = y[indices]
+
+        # Ensure the sample is sorted and has unique x-values
+        sorted_idx = argsort(x_sample)
+        x_sample = x_sample[sorted_idx]
+        y_sample = y_sample[sorted_idx]
+        x_sample, unique_idx = unique(x_sample, return_index=True)
+        y_sample = y_sample[unique_idx]
+
+        if len(x_sample) < 4:
+            continue  # Need enough points for a spline
+
+        try:
+            spline_bs = CubicSpline(x_sample, y_sample)
+            res_bs = minimize_scalar(spline_bs, bounds=(x.min(), x.max()), method='bounded')
+            xmins.append(res_bs.x)
+            ymins.append(res_bs.fun)
+        except Exception:
+            continue  # Skip if spline fails
+
+    xmins = array(xmins)
+    ymins = array(ymins)
+
+    # Statistics
+    xmean, xerr = mean(xmins), std(xmins)
+    ymean, yerr = mean(ymins), std(ymins)
+
+    TC_H4.append(xmean)
+    DP_FSS_H4.append(xerr)
+
+    # Plot
+    ax = axes[i]
+    x_fine = linspace(x.min(), x.max(), 500)
+    y_fine = spline(x_fine)
+    ax.plot(x, y, 'o', label='Data', markersize=4)
+    ax.plot(x_fine, y_fine, '-', label='Cubic Spline')
+    ax.plot(xmean, ymean, '*', markersize=8, label='Bootstrap Mean Minimum')
+    ax.axvspan(xmean - xerr, xmean + xerr, color='red', alpha=0.2, label='x error')
+    ax.set_title(f'L = {l}')
+    ax.legend(fontsize=8)
+    ax.grid(True)
+    ax.set_xlim(0.6,0.9)
+    ax.set_ylim(-1.9,-0.45)
+
+# Converter para arrays
+TC_H4 = array(TC_H4)
+DP_FSS_H4 = array(DP_FSS_H4)
+
+fig.suptitle(r'$\langle \Upsilon_4 \rangle$ em função de $T$', fontsize=16)
+plt.savefig("TCH4.pdf")
+plt.show()
+
+# Resultados parciais (opcional)
+for i, l in enumerate(redes):
+    print(f"L = {l:3d} | Tc = {TC_H4[i]:.5f} ± {DP_FSS_H4[i]:.5f}")
+#@title Modelo baseado na expressão $ T(L) = T_c + \frac{a}{ln^2(bL)} $
+def fss_bkt(L, Tc, a, b):
+    return Tc + a / (log(L*b))**2
+
+#============================================================================# Ajuste dos parâmetros
+popt, pcov = curve_fit(
+    fss_bkt, redes, TC_H4,
+    sigma=DP_FSS_H4, absolute_sigma=True,
+    maxfev=10000)
+
+perr = sqrt(diag(pcov))
+Tc_fit, a_fit, b_fit = popt
+redes = array(redes)
+#============================================================================# Gráfico
+# Eixo x: ln²(bL) = (ln L + b)²
+x_fit = 1 / (log(redes * b_fit))**2
+
+x_plot = linspace(0.001, max(x_fit), 500)
+L_plot = (1 / b_fit) * exp(sqrt(1 / x_plot))
+y_plot = fss_bkt(L_plot, *popt)
+
+# Gráfico
+fig, ax = plt.subplots(layout='constrained')
+ax.errorbar(x_fit, TC_H4, yerr=DP_FSS_H4, fmt='o', capsize=5, color='black', label='Dados')
+ax.plot(x_plot, y_plot, color='firebrick', label='Ajuste FSS')
+
+ax.set(xlabel=r'$1/\ln^2(bL)$', ylabel=r'$T^*(L)$')
+ax.legend()
+ax.grid()
+plt.show()
+
+# Parâmetros ajustados
+print(f"Tc = {Tc_fit:.5f} ± {perr[0]:.5f}")
+print(f"a  = {a_fit:.5f} ± {perr[1]:.5f}")
+print(f"b  = {b_fit:.5f} ± {perr[2]:.5f}")
+
+#@title Modelo baseado na expressão $T(L) = T_c + a \frac{T_c}{ln^2(L+c)}$
+def fss_jian(L, Tc, a, c):
+    return Tc *( 1 + a / (log(L) + c)**2 )
+#============================================================================# Ajuste dos parâmetros
+popt, pcov = curve_fit(
+    fss_jian, redes, TC_H4,
+    sigma=DP_FSS_H4, absolute_sigma=True,
+    maxfev=10000)
+
+perr = sqrt(diag(pcov))
+TC_fit, a_fit, c_fit = popt
+redes = array(redes)
+#============================================================================# Gráfico
+# Eixo x: 1 / (log(L) + c)^2
+x_fit = 1 / (log(redes) + c_fit)**2
+
+# Curva ajustada
+x_plot = linspace(0.0001, max(x_fit), 500)
+L_plot = exp(sqrt(1 / x_plot) - c_fit)
+y_plot = fss_jian(L_plot, *popt)
+
+# Gráfico
+fig, ax = plt.subplots(layout='constrained')
+ax.errorbar(x_fit, TC_H4, yerr=DP_FSS_H4, fmt='o', capsize=4, color='black', label='Dados')
+ax.plot(x_plot, y_plot, color='green', label='Ajuste Jiang')
+
+ax.set(xlabel=r'$1/(\log L + c)^2$', ylabel=r'$T^*(L)$')
+ax.legend()
+ax.grid()
+plt.show()
+
+#============================================================================# Parâmetros ajustados
+print(f"Tc = {TC_fit:.5f} ± {perr[0]:.5f}")
+print(f"a  = {a_fit:.5f} ± {perr[1]:.5f}")
+print(f"c  = {c_fit:.5f} ± {perr[2]:.5f}")
+#@title FSS: ${T_c}_{\langle \Upsilon_4 \rangle}$ vs $\frac{1}{L}$
+#============================================================================#
+lnL2 = [(1 / L) for L in redes]
+# Ajuste
+def afim(x,m,b):
+    return m*x + b
+xfss = linspace(0, max(lnL2), num=1000)
+popt, pcov = curve_fit(afim, lnL2, TC_H4)
+perr = sqrt(diag(pcov))
+#============================================================================#
+# Gráfico
+fig, ax = plt.subplots(layout='constrained')
+# Plots
+ax.errorbar(lnL2, TC_H4, yerr = DP_FSS_H4, linewidth=2, capsize=4, fmt='o', alpha=0.9,color='black')
+ax.plot(lnL2, TC_H4, linestyle='--')
+# Config
+ax.set(xlabel=r'$\frac{1}{L}$', ylabel=r'$T_c$')
+#ax.legend()
+ax.grid()
+#plt.savefig("FSS_H4.pdf")
+plt.show()
+#============================================================================#
+#@title GRÁFICO FSS H2 e H4
+#============================================================================#
+def fss_bkt(L, Tc, a, b):
+    return Tc + a / (log(L*b))**2
+
+#============================================================================# Y
+popt1, pcov1 = curve_fit(
+    fss_bkt, redes,
+    TC_H2,
+    sigma=DP_FSS_H2,
+    absolute_sigma=True,
+    maxfev=10000)
+
+perr = sqrt(diag(pcov1))
+Tc1_fit, a1_fit, b1_fit = popt1
+
+#============================================================================# Y4
+popt2, pcov2 = curve_fit(
+    fss_bkt, redes,
+    TC_H4,
+    sigma=DP_FSS_H4,
+    absolute_sigma=True,
+    maxfev=10000)
+
+perr = sqrt(diag(pcov2))
+Tc2_fit, a2_fit, b2_fit = popt2
+
+#============================================================================# Gráfico
+redes = array(redes)
+
+# Eixo x: ln²(bL) = (ln L + b)²
+x1_fit = 1 / (log(redes * b1_fit))**2
+x1_plot = linspace(0.001, max(x1_fit), 500)
+L1_plot = (1 / b1_fit) * exp(sqrt(1 / x1_plot))
+y1_plot = fss_bkt(L1_plot, *popt1)
+
+x2_fit = 1 / (log(redes * b2_fit))**2
+x2_plot = linspace(0.001, max(x2_fit), 500)
+L2_plot = (1 / b2_fit) * exp(sqrt(1 / x2_plot))
+y2_plot = fss_bkt(L2_plot, *popt2)
+
+# Gráfico
+fig, ax = plt.subplots(layout='constrained')
+ax.errorbar(x1_fit, TC_H2, yerr=DP_FSS_H2, fmt='o', capsize=5, color='black', ecolor='dimgray')
+ax.plot(x1_plot, y1_plot, label=r'FSS $\Upsilon$')
+
+ax.errorbar(x2_fit, TC_H4, yerr=DP_FSS_H4, fmt='h', capsize=5, color='black', ecolor='dimgray')
+ax.plot(x2_plot, y2_plot, label=r'FSS $\Upsilon_4$')
+
+ax.set(xlabel=r'$1/\ln^2(bL)$', ylabel=r'$T_c(L)$')
+ax.legend()
+ax.grid()
+plt.show()
+#@title Pontos da Temperatura Crítica $(\langle \Upsilon \rangle$ vs $2T/\pi)$ SA
+#============================================================================#
+
+redes = [6, 8, 12, 16, 24, 32, 48, 64, 96, 128] #
+TC_H2 = []
+DP_FSS_H2 = []
+
+for l in redes:
+    # Load your data
+    data = loadtxt(f'/content/drive/MyDrive/honey/L{l}/h2.{l}.dat')
+    T = data[:, 0]
+    Y = data[:, 1]*4.0/3.0/sqrt(3.0)
+    Yerr = data[:, 2]*4.0/3.0/sqrt(3.0)
+
+    # Interpolate central value and error bounds
+    Y_upper = Y + Yerr
+    Y_lower = Y - Yerr
+
+    helicity_interp = interp1d(T, Y, kind='cubic')
+    helicity_upper_interp = interp1d(T, Y_upper, kind='cubic')
+    helicity_lower_interp = interp1d(T, Y_lower, kind='cubic')
+
+    # 2T/pi line
+    line_interp = lambda T: 2 * T / pi
+
+    # Functions for intersections
+    def f_mid(temp):
+        return helicity_interp(temp) - line_interp(temp)
+
+    def f_upper(temp):
+        return helicity_upper_interp(temp) - line_interp(temp)
+
+    def f_lower(temp):
+        return helicity_lower_interp(temp) - line_interp(temp)
+
+    # Automatically find intersection intervals by sign change
+    def find_bracket(f, T):
+        for i in range(len(T) - 1):
+            if f(T[i]) * f(T[i+1]) < 0:
+                return T[i], T[i+1]
+        raise ValueError("No intersection found for given curve.")
+
+    # Find intersection points
+    T_low, T_high = find_bracket(f_mid, T)
+    T_c = brentq(f_mid, T_low, T_high)
+    Y_c = helicity_interp(T_c)
+
+    T_low_u, T_high_u = find_bracket(f_upper, T)
+    T_c_upper = brentq(f_upper, T_low_u, T_high_u)
+
+    T_low_l, T_high_l = find_bracket(f_lower, T)
+    T_c_lower = brentq(f_lower, T_low_l, T_high_l)
+
+    TC_H2.append(T_c)
+    DP_FSS_H2.append((T_c_upper - T_c_lower)/2)
+TC_H2 = array(TC_H2)
+DP_FSS_H2 = array(DP_FSS_H2)
+# Resultados parciais
+for i, l in enumerate(redes):
+    print(f"L = {l:3d} | Tc = {TC_H2[i]:.5f} ± {DP_FSS_H2[i]:.5f}")
+#@title Pontos da Temperatura Crítica $(\langle \Upsilon \rangle$ vs $2T/\pi)$ WL
+#============================================================================#
+
+redesWL = [6, 8, 12, 16, 24, 32, 48]
+TC_H2_WL = []
+DP_FSS_H2_WL = []
+
+for l in redesWL:
+    # Load your data
+    if l < 48:
+      data = loadtxt(f'/content/drive/MyDrive/wl/L{l}/h2.{l}.dat')
+    elif l == 48:
+      data = loadtxt(f'/content/drive/MyDrive/wl/hel.48.02.dat')
+    T = data[:, 0]
+    Y = data[:, 1]*4/3/sqrt(3)
+    Yerr = data[:, 2]*4/3/sqrt(3)
+
+    # Interpolate central value and error bounds
+    Y_upper = Y + Yerr
+    Y_lower = Y - Yerr
+
+    helicity_interp = interp1d(T, Y, kind='cubic')
+    helicity_upper_interp = interp1d(T, Y_upper, kind='cubic')
+    helicity_lower_interp = interp1d(T, Y_lower, kind='cubic')
+
+    # 2T/pi line
+    line_interp = lambda T: 2 * T / pi
+
+    # Functions for intersections
+    def f_mid(temp):
+        return helicity_interp(temp) - line_interp(temp)
+
+    def f_upper(temp):
+        return helicity_upper_interp(temp) - line_interp(temp)
+
+    def f_lower(temp):
+        return helicity_lower_interp(temp) - line_interp(temp)
+
+    # Automatically find intersection intervals by sign change
+    def find_bracket(f, T):
+        for i in range(len(T) - 1):
+            if f(T[i]) * f(T[i+1]) < 0:
+                return T[i], T[i+1]
+        raise ValueError("No intersection found for given curve.")
+
+    # Find intersection points
+    T_low, T_high = find_bracket(f_mid, T)
+    T_c = brentq(f_mid, T_low, T_high)
+    Y_c = helicity_interp(T_c)
+
+    T_low_u, T_high_u = find_bracket(f_upper, T)
+    T_c_upper = brentq(f_upper, T_low_u, T_high_u)
+
+    T_low_l, T_high_l = find_bracket(f_lower, T)
+    T_c_lower = brentq(f_lower, T_low_l, T_high_l)
+
+    TC_H2_WL.append(T_c)
+    DP_FSS_H2_WL.append(abs(T_c_upper - T_c_lower)/2)
+
+TC_H2_WL = array(TC_H2_WL)
+DP_FSS_H2_WL = array(DP_FSS_H2_WL)
+DP_FSS_H2_WL[6] = DP_FSS_H2_WL[5]
+# Resultados parciais
+for i, l in enumerate(redesWL):
+    print(f"L = {l:3d} | Tc = {TC_H2_WL[i]:.5f} ± {DP_FSS_H2_WL[i]:.5f}")
+#@title FIGURA ARTIGO ${T_c}\langle \Upsilon \rangle$ vs $2T/\pi$ em função de $1/\ln^2(bL)$
+#============================================================================#
+def fss_bkt(L, Tc, a, b):
+    return Tc + a / (log(L*b))**2
+
+#============================================================================# Y
+popt1, pcov1 = curve_fit(
+    fss_bkt, redes,
+    TC_H2,
+    sigma=DP_FSS_H2,
+    absolute_sigma=True,
+    maxfev=10000)
+
+perr1 = sqrt(diag(pcov1))
+Tc1_fit, a1_fit, b1_fit = popt1
+
+#============================================================================# WL
+popt2, pcov2 = curve_fit(
+    fss_bkt, redesWL,
+    TC_H2_WL,
+    sigma=DP_FSS_H2_WL,
+    absolute_sigma=True,
+    maxfev=10000)
+
+perr2 = sqrt(diag(pcov2))
+Tc2_fit, a2_fit, b2_fit = popt2
+
+#============================================================================# Gráfico
+redes = array(redes)
+redesWL = array(redesWL)
+
+# Eixo x: ln²(bL) = (ln L + b)²
+x1_fit = 1 / (log(redes * b1_fit))**2
+x1_plot = linspace(0.001, max(x1_fit), 500)
+L1_plot = (1 / b1_fit) * exp(sqrt(1 / x1_plot))
+y1_plot = fss_bkt(L1_plot, *popt1)
+
+x2_fit = 1 / (log(redesWL * b2_fit))**2
+x2_plot = linspace(0.001, max(x2_fit), 500)
+L2_plot = (1 / b2_fit) * exp(sqrt(1 / x2_plot))
+y2_plot = fss_bkt(L2_plot, *popt2)
+
+# Gráfico
+fig, ax = plt.subplots(layout='constrained')
+ax.errorbar(x1_fit, TC_H2, yerr=DP_FSS_H2, fmt='o', capsize=5, color='black', ecolor='black')
+ax.plot(x1_plot+1, y1_plot+1, label=r'WL', color='darkorange', linestyle='--')
+ax.plot(x1_plot, y1_plot, label=r'SA')
+ax.set(xlabel=r'$1/\ln^2(bL)$', ylabel=r'$T_c(L)$', xlim=[0.,max(x1_fit)+0.005], ylim=[0.56,0.8])
+ax.grid()
+
+# Adicionando o gráfico menor
+axins = ax.inset_axes([0.1, 0.538, 0.45, 0.45])
+axins.errorbar(x2_fit, TC_H2_WL, yerr=DP_FSS_H2_WL, fmt='o', capsize=5, color='black', ecolor='black', fillstyle='none')
+axins.plot(x2_plot, y2_plot, color='darkorange', linestyle='--')
+axins.set()
+axins.grid()
+ax.legend(loc='lower right')
+plt.savefig("FSS_H2.pdf")
+plt.show()
+
+from IPython.display import display, Math
+
+display(Math(r'{T_c}\langle \Upsilon \rangle \text{ vs } \frac{2T}{\pi} \text{ em função de } 1/\ln^2(bL)'))
+print(f"Tc SA = {Tc1_fit:.5f} ± {perr1[0]:.5f}")
+print(f"a SA = {a1_fit:.5f} ± {perr1[1]:.5f}")
+print(f"b SA = {b1_fit:.5f} ± {perr1[2]:.5f}")
+print("--------------------------")
+print(f"Tc WL = {Tc2_fit:.5f} ± {perr2[0]:.5f}")
+print(f"a WL = {a2_fit:.5f} ± {perr2[1]:.5f}")
+print(f"b WL = {b2_fit:.5f} ± {perr2[2]:.5f}")
+#@title Pontos da Temperatura Crítica $\langle \Upsilon_4 \rangle$ *SA*
+TC_H4 = []
+DP_FSS_H4 = []
+redes = [6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
+
+for i, l in enumerate(redes):
+    # Load and restrict the data
+    data = loadtxt(f'/content/drive/MyDrive/honey/L{l}/h4.{l}.dat')
+    data = data[argsort(data[:, 0])]
+    _, unique_indices = unique(data[:, 0], return_index=True)
+    data = data[unique_indices]
+
+    # Restrict x range
+    mask = (data[:, 0] >= 0.5) & (data[:, 0] <= 1.0)
+    data = data[mask]
+    x = data[:, 0]
+    y = data[:, 1]*4.0/3.0/sqrt(3.0)
+
+    # Original spline and minimum
+    spline = CubicSpline(x, y)
+    res = minimize_scalar(spline, bounds=(x.min(), x.max()), method='bounded')
+    xmin, ymin = res.x, res.fun
+
+    # Bootstrap
+    n_bootstrap = 1000
+    xmins = []
+    ymins = []
+
+    rng = random.default_rng()
+
+    for _ in range(n_bootstrap):
+        indices = rng.integers(0, len(x), size=len(x))
+        x_sample = x[indices]
+        y_sample = y[indices]
+
+        # Ensure the sample is sorted and has unique x-values
+        sorted_idx = argsort(x_sample)
+        x_sample = x_sample[sorted_idx]
+        y_sample = y_sample[sorted_idx]
+        x_sample, unique_idx = unique(x_sample, return_index=True)
+        y_sample = y_sample[unique_idx]
+
+        if len(x_sample) < 4:
+            continue  # Need enough points for a spline
+
+        try:
+            spline_bs = CubicSpline(x_sample, y_sample)
+            res_bs = minimize_scalar(spline_bs, bounds=(x.min(), x.max()), method='bounded')
+            xmins.append(res_bs.x)
+            ymins.append(res_bs.fun)
+        except Exception:
+            continue  # Skip if spline fails
+
+    xmins = array(xmins)
+    ymins = array(ymins)
+
+    # Statistics
+    xmean, xerr = mean(xmins), std(xmins)
+    ymean, yerr = mean(ymins), std(ymins)
+
+    TC_H4.append(xmean)
+    DP_FSS_H4.append(xerr)
+
+# Converter para arrays
+TC_H4 = array(TC_H4)
+DP_FSS_H4 = array(DP_FSS_H4)
+
+# Resultados parciais (opcional)
+for i, l in enumerate(redes):
+    print(f"L = {l:3d} | Tc = {TC_H4[i]:.5f} ± {DP_FSS_H4[i]:.5f}")
+#@title Pontos da Temperatura Crítica $\langle \Upsilon_4 \rangle$ *SA*
+TC_H4_WL = []
+DP_FSS_H4_WL = []
+redesWL = [6, 8, 12, 16, 24, 32, 48]
+
+for i, l in enumerate(redesWL):
+    # Load and restrict the data
+    if l < 48:
+        data = loadtxt(f'/content/drive/MyDrive/wl/L{l}/h4.{l}.dat')
+        data = data[argsort(data[:, 0])]
+        _, unique_indices = unique(data[:, 0], return_index=True)
+        data = data[unique_indices]
+
+        # Restrict x range
+        mask = (data[:, 0] >= 0.5) & (data[:, 0] <= 1.0)
+        data = data[mask]
+        x = data[:, 0]
+        y = data[:, 1]*4.0/3.0/sqrt(3.0)
+
+    elif l == 48:
+        data = loadtxt(f'/content/drive/MyDrive/wl/hel.48.02.dat')
+        data = data[argsort(data[:, 0])]
+        data = data[argsort(data[:, 0])]
+        _, unique_indices = unique(data[:, 0], return_index=True)
+        data = data[unique_indices]
+
+        # Restrict x range
+        mask = (data[:, 0] >= 0.5) & (data[:, 0] <= 1.0)
+        data = data[mask]
+        x = data[:, 0]
+        y = data[:, 2]*4.0/3.0/sqrt(3.0)
+
+    # Original spline and minimum
+    spline = CubicSpline(x, y)
+    res = minimize_scalar(spline, bounds=(x.min(), x.max()), method='bounded')
+    xmin, ymin = res.x, res.fun
+
+    # Bootstrap
+    n_bootstrap = 1000
+    xmins = []
+    ymins = []
+
+    rng = random.default_rng()
+
+    for _ in range(n_bootstrap):
+        indices = rng.integers(0, len(x), size=len(x))
+        x_sample = x[indices]
+        y_sample = y[indices]
+
+        # Ensure the sample is sorted and has unique x-values
+        sorted_idx = argsort(x_sample)
+        x_sample = x_sample[sorted_idx]
+        y_sample = y_sample[sorted_idx]
+        x_sample, unique_idx = unique(x_sample, return_index=True)
+        y_sample = y_sample[unique_idx]
+
+        if len(x_sample) < 4:
+            continue  # Need enough points for a spline
+
+        try:
+            spline_bs = CubicSpline(x_sample, y_sample)
+            res_bs = minimize_scalar(spline_bs, bounds=(x.min(), x.max()), method='bounded')
+            xmins.append(res_bs.x)
+            ymins.append(res_bs.fun)
+        except Exception:
+            continue  # Skip if spline fails
+
+    xmins = array(xmins)
+    ymins = array(ymins)
+
+    # Statistics
+    xmean, xerr = mean(xmins), std(xmins)
+    ymean, yerr = mean(ymins), std(ymins)
+
+    TC_H4_WL.append(xmean)
+    DP_FSS_H4_WL.append(xerr)
+
+# Converter para arrays
+TC_H4_WL = array(TC_H4_WL)
+DP_FSS_H4_WL = array(DP_FSS_H4_WL)
+
+# Resultados parciais (opcional)
+for i, l in enumerate(redesWL):
+    print(f"L = {l:3d} | Tc = {TC_H4[i]:.5f} ± {DP_FSS_H4[i]:.5f}")
+#@title FIGURA ARTIGO ${T_c}\langle \Upsilon_4 \rangle$ em função de $1/\ln^2(bL)$
+#============================================================================#
+def fss_bkt(L, Tc, a, b):
+    return Tc + a / (log(L*b))**2
+
+#============================================================================# Y
+popt1, pcov1 = curve_fit(
+    fss_bkt, redes,
+    TC_H4,
+    sigma=DP_FSS_H4,
+    absolute_sigma=True,
+    maxfev=10000)
+
+perr1 = sqrt(diag(pcov1))
+Tc1_fit, a1_fit, b1_fit = popt1
+
+#============================================================================# WL
+popt2, pcov2 = curve_fit(
+    fss_bkt, redesWL,
+    TC_H4_WL,
+    sigma=DP_FSS_H4_WL,
+    absolute_sigma=True,
+    maxfev=10000)
+
+perr2 = sqrt(diag(pcov2))
+Tc2_fit, a2_fit, b2_fit = popt2
+
+#============================================================================# Gráfico
+redes = array(redes)
+redesWL = array(redesWL)
+
+# Eixo x: ln²(bL) = (ln L + b)²
+x1_fit = 1 / (log(redes * b1_fit))**2
+x1_plot = linspace(0.001, max(x1_fit), 500)
+L1_plot = (1 / b1_fit) * exp(sqrt(1 / x1_plot))
+y1_plot = fss_bkt(L1_plot, *popt1)
+
+x2_fit = 1 / (log(redesWL * b2_fit))**2
+x2_plot = linspace(0.001, max(x2_fit), 500)
+L2_plot = (1 / b2_fit) * exp(sqrt(1 / x2_plot))
+y2_plot = fss_bkt(L2_plot, *popt2)
+
+# Gráfico
+fig, ax = plt.subplots(layout='constrained')
+ax.errorbar(x1_fit, TC_H4, yerr=DP_FSS_H4, fmt='o', capsize=5, color='black', ecolor='black')
+ax.plot(x1_plot+1, y1_plot+1, label=r'WL', color='darkorange', linestyle='--')
+ax.plot(x1_plot, y1_plot, label=r'SA')
+ax.set(xlabel=r'$1/\ln^2(bL)$', ylabel=r'$T_c(L)$', xlim=[0.,max(x1_fit)+0.005], ylim=[0.55,0.96])
+ax.grid()
+
+# Adicionando o gráfico menor
+axins = ax.inset_axes([0.1, 0.538, 0.45, 0.45])
+axins.errorbar(x2_fit, TC_H4_WL, yerr=DP_FSS_H4_WL, fmt='o', capsize=5, color='black', ecolor='black', fillstyle='none')
+axins.plot(x2_plot, y2_plot, color='darkorange', linestyle='--')
+axins.set()
+axins.grid()
+ax.legend(loc='lower right')
+plt.savefig("FSS_H4.pdf")
+plt.show()
+
+
+display(Math(r'{T_c}\langle \Upsilon_4 \rangle \text{ em função de } 1/\ln^2(bL)'))
+print(f"Tc SA = {Tc1_fit:.5f} ± {perr1[0]:.5f}")
+print(f"a SA = {a1_fit:.5f} ± {perr1[1]:.5f}")
+print(f"b SA = {b1_fit:.5f} ± {perr1[2]:.5f}")
+print("--------------------------")
+print(f"Tc WL = {Tc2_fit:.5f} ± {perr2[0]:.5f}")
+print(f"a WL = {a2_fit:.5f} ± {perr2[1]:.5f}")
+print(f"b WL = {b2_fit:.5f} ± {perr2[2]:.5f}")
+#@title save txt
+# Caminho do arquivo de saída
+output_path = '/content/critical_temps.txt'
+
+# Abrindo o arquivo para escrita
+with open(output_path, 'w') as f:
+    f.write("# L\tTc_H2\t\tErr_Tc_H2\tTc_H4\t\tErr_Tc_H4\n")
+    for l, tc_h2, errh2, tc_h4, errh4 in zip(redes, TC_H2, DP_FSS_H2, TC_H4, DP_FSS_H4):
+        f.write(f"{l}\t{tc_h2:.6f}\t{errh2:.6f}\t{tc_h4:.6f}\t{errh4:.6f}\n")
+
+    f.write("\n\n# L\tTc_H2_WL\tErr_Tc_H2_WL\tTc_H4_WL\tErr_Tc_H4_WL\n")
+    for l, tc_h2, errh2, tc_h4, errh4 in zip(redesWL, TC_H2_WL, DP_FSS_H2_WL, TC_H4_WL, DP_FSS_H4_WL):
+        f.write(f"{l}\t{tc_h2:.6f}\t{errh2:.6f}\t{tc_h4:.6f}\t{errh4:.6f}\n")
+# Flutuações Termodinâmicas e Médias
+#@title Redes
+#============================================================================#
+redesFlut = [6, 8, 12, 16, 24, 32, 48]
+
+colors1 = ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#1f78b4']
+colors2 = ['#58c7aa', '#f1914f', '#a59bd1', '#f08abc', '#99c863', '#f4c73f', '#6baed6']
+colors3 = ['#116d5d', '#a34701', '#574d9a', '#b11e6f', '#4a7915', '#a17600', '#0b4a74']
+markers  = ['o', 'p', 'h', '^','v', '<', '>']
+
+legend_elements_MT = [
+    Line2D([0], [0], marker='o', color='#116d5d', label='L $=6$', markerfacecolor='#1b9e77', markersize=10),
+    Line2D([0], [0], marker='p', color='#a34701', label='L $=8$', markerfacecolor='#d95f02', markersize=10),
+    Line2D([0], [0], marker='h', color='#574d9a', label='L $=12$', markerfacecolor='#7570b3', markersize=10),
+    Line2D([0], [0], marker='^', color='#b11e6f', label='L $=16$', markerfacecolor='#e7298a', markersize=10),
+    Line2D([0], [0], marker='v', color='#4a7915', label='L $=24$', markerfacecolor='#66a61e', markersize=10),
+    Line2D([0], [0], marker='<', color='#a17600', label='L $=32$', markerfacecolor='#e6ab02', markersize=10),
+    Line2D([0], [0], marker='>', color='#0b4a74', label='L $=48$', markerfacecolor='#1f78b4', markersize=10)
+    ]
+
+with open(f'/content/drive/MyDrive/wl/L32/ee.32.dat', 'r') as f:
+    tWL = [float(line.split()[0]) for line in f]
+    tWL = array(tWL)
+#@title Energia
+#============================================================================#
+EE = []
+DPee=[]
+WL_EE = []
+
+for l in redesFlut:
+    ee = []
+    with open(f'/content/drive/MyDrive/honey/L{l}/ee.{l}.dat', 'r') as f:
+        ee.append([float(line.split()[1]) for line in f])
+    ee = array(ee)
+
+    dpee=[]
+    with open(f'/content/drive/MyDrive/honey/L{l}/ee.{l}.dat', 'r') as f:
+        dpee.append([float(line.split()[2]) for line in f])
+    dpee = array(dpee)
+    EE.append(ee)
+    DPee.append(dpee)
+
+    wlee=[]
+    if l < 48:
+        with open(f'/content/drive/MyDrive/wl/L{l}/ee.{l}.dat', 'r') as f:
+            wlee.append([float(line.split()[1]) for line in f])
+    elif l == 48:
+        with open(f'/content/drive/MyDrive/wl/cv.48.02.dat', 'r') as f:
+            wlee.append([float(line.split()[3]) for line in f])
+    wlee = array(wlee)
+    WL_EE.append(wlee)
+#@title GRÁFICO Energia
+#============================================================================# Gráfico
+fig, ax = plt.subplots(layout='constrained', figsize=(10,8))
+ax.set(xlabel=r'$T$', ylabel=r'$\langle E \rangle$', xlim=[0.5,1], ylim=[-1.3,-0.6])
+ax.legend(handles=legend_elements_MT)
+ax.grid()
+
+for wl, data, dp, marker, color1, color2, color3 in zip(WL_EE, EE, DPee, markers, colors1, colors2, colors3):
+    ax.plot(tWL, wl[0], color=color3)
+    ax.errorbar(t, data[0], yerr=dp[0], capsize=4, label='_nolegend_', alpha=1, fmt=marker, color=color1, ecolor=color2, markeredgecolor=color3)
+
+plt.savefig("ee.pdf")
+plt.show()
+#@title Calor Específico
+#============================================================================#
+CV = []
+DPcv=[]
+WL_CV = []
+WL_CV_MAX = []
+for l in redesFlut:
+    cv = []
+    with open(f'/content/drive/MyDrive/honey/L{l}/cv.{l}.dat', 'r') as f:
+        cv.append([float(line.split()[1]) for line in f])
+    cv = array(cv)
+
+    dpcv=[]
+    with open(f'/content/drive/MyDrive/honey/L{l}/cv.{l}.dat', 'r') as f:
+        dpcv.append([float(line.split()[2]) for line in f])
+    dpcv = array(dpcv)
+
+    CV.append(cv)
+    DPcv.append(dpcv)
+
+    wlcv=[]
+    if l < 48:
+        with open(f'/content/drive/MyDrive/wl/L{l}/cv.{l}.dat', 'r') as f:
+            wlcv.append([float(line.split()[1]) for line in f])
+    elif l == 48:
+        with open(f'/content/drive/MyDrive/wl/cv.48.02.dat', 'r') as f:
+            wlcv.append([float(line.split()[4]) for line in f])
+
+    wlcv = array(wlcv)
+    WL_CV.append(wlcv)
+    WL_CV_MAX.append(max(wlcv[0][11:]))
+
+WL_CV_MAX = array(WL_CV_MAX)
+#@title GRÁFICO Calor Específico
+#============================================================================# Gráfico
+fig, ax = plt.subplots(layout='constrained', figsize=(10,8))
+ax.set(xlabel=r'$T$', ylabel=r'$C_v$', xlim=[0.5,1], ylim=[0.6,1.5])
+ax.legend(handles=legend_elements_MT)
+ax.grid()
+
+for wl, data, dp, marker, color1, color2, color3 in zip(WL_CV, CV, DPcv, markers, colors1, colors2, colors3):
+    ax.plot(tWL, wl[0], color=color3)
+    ax.errorbar(t, data[0], yerr=dp[0], capsize=4, label='_nolegend_', alpha=1, fmt=marker, color=color1, ecolor=color2, markeredgecolor=color3)
+
+plt.savefig("cv.pdf")
+plt.show()
+#@title Magnetização
+#============================================================================#
+MM = []
+DPmm=[]
+WL_MM = []
+
+for l in redesFlut:
+    mm = []
+    with open(f'/content/drive/MyDrive/honey/L{l}/mm.{l}.dat', 'r') as f:
+        mm.append([float(line.split()[1]) for line in f])
+    mm = array(mm)
+
+    dpmm=[]
+    with open(f'/content/drive/MyDrive/honey/L{l}/mm.{l}.dat', 'r') as f:
+        dpmm.append([float(line.split()[2]) for line in f])
+    dpmm = array(dpmm)
+    MM.append(mm)
+    DPmm.append(dpmm)
+
+    wlmm=[]
+    if l < 48:
+        with open(f'/content/drive/MyDrive/wl/L{l}/mm.{l}.dat', 'r') as f:
+            wlmm.append([float(line.split()[1]) for line in f])
+    elif l == 48:
+        with open(f'/content/drive/MyDrive/wl/cv.48.02.dat', 'r') as f:
+            wlmm.append([float(line.split()[1]) for line in f])
+
+    wlmm = array(wlmm)
+    WL_MM.append(wlmm)
+#@title GRÁFICO Magnetização
+#============================================================================# Gráfico
+fig, ax = plt.subplots(layout='constrained', figsize=(10,8))
+ax.set(xlabel=r'$T$', ylabel=r'$\langle M \rangle$', xlim=[0.5,1], ylim=[0.01,0.9])
+ax.legend(handles=legend_elements_MT)
+ax.grid()
+
+for wl, data, dp, marker, color1, color2, color3 in zip(WL_MM, MM, DPmm, markers, colors1, colors2, colors3):
+    ax.plot(tWL, wl[0], color=color3)
+    ax.errorbar(t, data[0], yerr=dp[0], capsize=4, label='_nolegend_', alpha=1, fmt=marker, color=color1, ecolor=color2, markeredgecolor=color3)
+
+plt.savefig("mm.pdf")
+plt.show()
+#@title Suscetibilidade
+#============================================================================#
+KI = []
+DPki=[]
+WL_KI = []
+
+for l in redesFlut:
+    ki = []
+    with open(f'/content/drive/MyDrive/honey/L{l}/ki.{l}.dat', 'r') as f:
+        ki.append([float(line.split()[1]) for line in f])
+    ki = array(ki)
+
+    dpki=[]
+    with open(f'/content/drive/MyDrive/honey/L{l}/ki.{l}.dat', 'r') as f:
+        dpki.append([float(line.split()[2]) for line in f])
+    dpki = array(dpki)
+    KI.append(ki)
+    DPki.append(dpki)
+
+    wlki=[]
+    if l < 48:
+        with open(f'/content/drive/MyDrive/wl/L{l}/ki.{l}.dat', 'r') as f:
+            wlki.append([float(line.split()[1]) for line in f])
+    elif l == 48:
+        with open(f'/content/drive/MyDrive/wl/cv.48.02.dat', 'r') as f:
+            wlki.append([float(line.split()[2]) for line in f])
+
+    wlki = array(wlki)
+    WL_KI.append(wlki)
+#@title GRÁFICO Suscetibilidade
+#============================================================================# Gráfico
+fig, ax = plt.subplots(layout='constrained', figsize=(10,8))
+ax.set(xlabel=r'$T$', ylabel=r'$\chi$', xlim=[0.5,1], ylim=[-1,70])
+ax.legend(handles=legend_elements_MT)
+ax.grid()
+
+for wl, data, dp, marker, color1, color2, color3 in zip(WL_KI, KI, DPki, markers, colors1, colors2, colors3):
+    ax.plot(tWL, wl[0], color=color3)
+    ax.errorbar(t, data[0], yerr=dp[0], capsize=4, label='_nolegend_', alpha=1, fmt=marker, color=color1, ecolor=color2, markeredgecolor=color3)
+
+plt.savefig("ki.pdf")
+plt.show()
+#@title Binder
+#============================================================================#
+BC = []
+DPbc=[]
+WL_BC=[]
+
+for l in redesFlut:
+    bc = []
+    with open(f'/content/drive/MyDrive/honey/L{l}/bc.{l}.dat', 'r') as f:
+        bc.append([float(line.split()[1]) for line in f])
+    bc = array(bc)
+    dpbc=[]
+    with open(f'/content/drive/MyDrive/honey/L{l}/bc.{l}.dat', 'r') as f:
+        dpbc.append([float(line.split()[2]) for line in f])
+    dpbc = array(dpbc)
+    dpbc = dpbc
+
+    BC.append(bc)
+    DPbc.append(dpbc)
+
+    wlbc=[]
+    if l < 48:
+        with open(f'/content/drive/MyDrive/wl/L{l}/bc.{l}.dat', 'r') as f:
+            wlbc.append([float(line.split()[1]) for line in f])
+    elif l == 48:
+        with open(f'/content/drive/MyDrive/wl/cvbc.48.02.dat', 'r') as f:
+            wlbc.append([float(line.split()[5]) for line in f])
+
+    wlbc = array(wlbc)
+    WL_BC.append(wlbc)
+
+#@title GRÁFICO Binder
+plt.rcParams['font.size'] = 25
+#============================================================================# Interpolação
+with open(f'/content/drive/MyDrive/wl/L32/bc.32.dat', 'r') as f:
+    tWLbc = [float(line.split()[0]) for line in f]
+    tWLbc = array(tWLbc)
+
+#============================================================================# Gráfico
+fig, ax = plt.subplots(layout='constrained', figsize=(10,8))
+ax.set(xlabel=r'$T$', ylabel=r'$B_M$', xlim=[0.5,1])
+ax.legend(handles=legend_elements_MT)
+ax.grid()
+
+for  wl, data, dp, marker, color1, color2, color3 in zip(WL_BC, BC, DPbc, markers, colors1, colors2, colors3):
+    ax.plot(tWLbc, wl[0], color=color3)
+    ax.errorbar(t, data[0], yerr=dp[0], capsize=4, label='_nolegend_', alpha=1, fmt=marker, color=color1, ecolor=color2, markeredgecolor=color3)
+
+plt.savefig("bc.pdf")
+plt.show()
+#@title Ki e M
+#============================================================================#
+plt.rcParams['font.size'] = 25
+# Criando o gráfico principal
+fig, ax = plt.subplots(layout='constrained', figsize=(10,8))
+ax.set(xlabel=r'$T$', ylabel=r'$\chi$', xlim=[0.5,1.5], ylim=[-1,70])
+ax.axvline(x=1/sqrt(2), linestyle='--', color='red')
+ax.text((1/sqrt(2) + 0.02), 61, r'$T_c = \frac{1}{\sqrt{2}}$', fontsize=25, color='red')
+ax.grid()
+
+# Dados para o gráfico principal
+for wl, data, dp, marker, color1, color2, color3 in zip(WL_KI, KI, DPki, markers, colors1, colors2, colors3):
+    ax.plot(tWL, wl[0], color=color3)
+    ax.errorbar(t, data[0], yerr=dp[0], capsize=4, label='_nolegend_', alpha=1, fmt=marker, color=color1, ecolor=color2, markeredgecolor=color3)
+
+# Adicionando o gráfico menor
+axins = ax.inset_axes([0.435, 0.43, 0.55, 0.55])
+axins.set(xlabel=r'$T$', ylabel=r'$\langle M \rangle$', xlim=[0.5,1], ylim=[0.01,0.9])
+axins.grid()
+
+# Dados para o gráfico menor
+for wl, data, dp, marker, color1, color2, color3 in zip(WL_MM, MM, DPmm, markers, colors1, colors2, colors3):
+    axins.plot(tWL, wl[0], color=color3)
+    axins.errorbar(t, data[0], yerr=dp[0], capsize=4, label='_nolegend_', alpha=1, fmt=marker, color=color1, ecolor=color2, markeredgecolor=color3)
+
+# Adiciona rótulo manual na curva verde (L = 6)
+axins.text(0.85, 0.62, 'L $= 6$', color='#116d5d', fontsize=18)
+# Adiciona rótulo manual na curva dourada (L = 32)
+axins.text(0.65, 0.12, 'L $= 48$', color='#0b4a74', fontsize=18)
+
+plt.savefig("kimm.pdf")
+plt.show()
+#@title Cv e E
+#============================================================================#
+# Criando o gráfico principal
+plt.rcParams['font.size'] = 25
+fig, ax = plt.subplots(layout='constrained', figsize=(10,8))
+ax.set(xlabel=r'$T$', ylabel=r'$C_v$', xlim=[0.5,1.5], ylim=[0.6,1.6])
+ax.axvline(x=1/sqrt(2), linestyle='--', color='red')
+ax.text((1/sqrt(2) + 0.03), 0.7, r'$T_c = \frac{1}{\sqrt{2}}$', fontsize=25, color='red')
+ax.grid()
+
+# Dados para o gráfico principal
+for wl, data, dp, marker, color1, color2, color3 in zip(WL_CV, CV, DPcv, markers, colors1, colors2, colors3):
+    ax.plot(tWL, wl[0], color=color3)
+    ax.errorbar(t, data[0], yerr=dp[0], capsize=4, label='_nolegend_', alpha=1, fmt=marker, color=color1, ecolor=color2, markeredgecolor=color3)
+
+# Adicionando o gráfico menor
+axins = ax.inset_axes([0.455, 0.45, 0.5, 0.5])
+axins.set(xlabel=r'$T$', ylabel=r'$\langle E \rangle$', xlim=[0.5,1], ylim=[-1.3,-0.6])
+axins.grid()
+
+# Dados para o gráfico menor
+for wl, data, dp, marker, color1, color2, color3 in zip(WL_EE, EE, DPee, markers, colors1, colors2, colors3):
+    axins.plot(tWL, wl[0], color=color3)
+    axins.errorbar(t, data[0], yerr=dp[0], capsize=4, label='_nolegend_', alpha=1, fmt=marker, color=color1, ecolor=color2, markeredgecolor=color3)
+
+# Adiciona rótulo manual na curva verde (L = 6)
+axins.text(0.8, -1.02, 'L $= 6$', color='#116d5d', fontsize=18)
+# Adiciona rótulo manual na curva dourada (L = 32)
+axins.text(0.7, -0.89, 'L $= 48$', color='#0b4a74', fontsize=18)
+
+plt.savefig("cvee.pdf")
+plt.show()
+#@title Cv e Cv_máx
+#============================================================================#
+# Criando o gráfico principal
+plt.rcParams['font.size'] = 25
+fig, ax = plt.subplots(layout='constrained', figsize=(10,8))
+ax.set(xlabel=r'$T$', ylabel=r'$C_v$', xlim=[0.5,1.5], ylim=[0.6,1.6])
+ax.axvline(x=1/sqrt(2), linestyle='--', color='red')
+ax.text((1/sqrt(2) + 0.03), 0.7, r'$T_c = \frac{1}{\sqrt{2}}$', fontsize=25, color='red')
+ax.grid()
+
+# Dados para o gráfico principal
+for wl, data, dp, marker, color1, color2, color3 in zip(WL_CV, CV, DPcv, markers, colors1, colors2, colors3):
+    ax.plot(tWL, wl[0], color=color3)
+    ax.errorbar(t, data[0], yerr=dp[0], capsize=4, label='_nolegend_', alpha=1, fmt=marker, color=color1, ecolor=color2, markeredgecolor=color3)
+
+# Adicionando o gráfico menor
+axins = ax.inset_axes([0.455, 0.45, 0.5, 0.5])
+axins.set(xlabel=r'$L$', ylabel=r'${C_v}^{max}$')
+axins.grid()
+axins.plot(redesFlut, WL_CV_MAX, '--', color=colors1[1])
+axins.scatter(redesFlut, WL_CV_MAX, color='black', zorder=2.5)
+
+
+
+plt.savefig("cvcvmax.pdf")
+plt.show()
+#Cruzamento dos Cumulantes de Binder
+#@title Binder Cross WL
+
+#============================================================================#
+
+colors1 = ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#1f78b4']
+colors2 = ['#58c7aa', '#f1914f', '#a59bd1', '#f08abc', '#99c863', '#f4c73f', '#6baed6']
+colors3 = ['#116d5d', '#a34701', '#574d9a', '#b11e6f', '#4a7915', '#a17600', '#0b4a74']
+
+#============================================================================#
+WL_BC=[]
+redesFlut = [6, 8, 12, 16, 24, 32, 48]
+
+for l in redesFlut:
+    wlbc=[]
+    if l < 48:
+        with open(f'/content/drive/MyDrive/wl/L{l}/bc.{l}.dat', 'r') as f:
+            wlbc.append([float(line.split()[1]) for line in f])
+    elif l == 48:
+        with open(f'/content/drive/MyDrive/wl/cvbc.48.02.dat', 'r') as f:
+            wlbc.append([float(line.split()[5]) for line in f])
+
+    wlbc = array(wlbc)
+    WL_BC.append(wlbc)
+#@title GRÁFICO Cruzamento Binder WL
+#============================================================================# Interpolação
+with open(f'/content/drive/MyDrive/wl/L32/bc.32.dat', 'r') as f:
+    tWLbc = [float(line.split()[0]) for line in f]
+    tWLbc = array(tWLbc)
+
+#============================================================================# Legenda
+
+linestyles = [
+    '-',        # linha contínua
+    '--',       # tracejada
+    '-.',       # traço-ponto
+    ':',        # pontilhada
+    (0, (5, 1)),      # traço longo com espaços curtos
+    (0, (3, 5, 1, 5)),# traço-ponto com mais espaçamento
+    (0, (6, 2, 3, 2))       # linha bem pontilhada (quase pixelada)
+]
+
+legend_elements_WL = [
+    Line2D([0], [0], color='#1b9e77', label='L $=6$', linestyle='-'),
+    Line2D([0], [0], color='#d95f02', label='L $=8$', linestyle='--'),
+    Line2D([0], [0], color='#7570b3', label='L $=12$', linestyle='-.'),
+    Line2D([0], [0], color='#e7298a', label='L $=16$', linestyle=':'),
+    Line2D([0], [0], color='#66a61e', label='L $=24$', linestyle=(0, (5, 1))),
+    Line2D([0], [0], color='#e6ab02', label='L $=32$', linestyle=(0, (3, 5, 1, 5))),
+    Line2D([0], [0], color='#1f78b4', label='L $=48$', linestyle=(0, (6, 2, 3, 2)))
+    ]
+
+
+#============================================================================# Gráfico
+fig, ax = plt.subplots(layout='constrained', figsize=(10,8))
+ax.set(xlabel=r'$T$', ylabel=r'$B_M$', xlim=[0.575,0.6], ylim=[0.654,0.6575])
+ax.legend(handles=legend_elements_WL)
+ax.grid()
+
+for  wl, color, ls in zip(WL_BC, colors1, linestyles):
+    ax.plot(tWLbc, wl[0], color=color, linestyle=ls)
+
+
+plt.savefig("bc_WL_cross.pdf")
+plt.show()
+#@title Cruzamentos Plascak
+todos_cruzamentos = []
+redes_wl = [6, 8, 12, 16, 24, 32, 48]  # mesma ordem de WL_BC
+
+for i in range(len(redes_wl) - 1):
+    L1 = redes_wl[i]
+    cruzamentos_L1 = []
+
+    for j in range(i + 1, len(redes_wl)):
+        L2 = redes_wl[j]
+
+        # Faixa física do gráfico
+        valid_range = (tWLbc >= 0.56) & (tWLbc <= 0.6)
+        T_filt = tWLbc[valid_range]
+        U1 = WL_BC[i][0][valid_range]
+        U2 = WL_BC[j][0][valid_range]
+
+        diff = abs(U2 - U1)
+        idx_min = np.argmin(diff)
+
+        if idx_min == 0 or idx_min >= len(T_filt) - 1:
+            print(f"Não foi possível interpolar entre L={L1} e L={L2}")
+            continue
+
+        # Interpolação linear
+        T1, T2 = T_filt[idx_min - 1], T_filt[idx_min + 1]
+        UL1_T1, UL1_T2 = U1[idx_min - 1], U1[idx_min + 1]
+        UL2_T1, UL2_T2 = U2[idx_min - 1], U2[idx_min + 1]
+
+        deltaT12 = T2 - T1
+        deltaUT1 = UL2_T1 - UL1_T1
+        deltaUT2 = UL2_T2 - UL1_T2
+
+        try:
+            Tcross = T2 - deltaUT2 / (deltaUT2 - deltaUT1) * deltaT12
+        except ZeroDivisionError:
+            print(f"Divisão por zero entre L={L1} e L={L2}")
+            continue
+
+        if not (0.575 <= Tcross <= 0.6):
+            print(f"Tcross fora da faixa: {Tcross:.5f} entre L={L1} e L={L2}")
+            continue
+
+        erro = abs(deltaT12) * 0.5  # erro estimado
+        cruzamentos_L1.append((L1, L2, Tcross, erro))
+
+    todos_cruzamentos.append(cruzamentos_L1)
+
+# Exibe os cruzamentos
+for i, cruzamentos in enumerate(todos_cruzamentos):
+    if cruzamentos:
+        print(f"\nCruzamentos com L={cruzamentos[0][0]}:")
+        for L1, L2, Tc, err in cruzamentos:
+            print(f"  L={L1} vs L={L2} → Tc = {Tc:.5f} ± {err:.5f}")
+#@title Cruzamento das redes FSS
+Lmin=12
+redes_cross = ([cruzamentos[1] for cruzamentos in todos_cruzamentos[2]])
+cross = array([cruzamentos[2] for cruzamentos in todos_cruzamentos[2]])
+err = array([cruzamentos[3] for cruzamentos in todos_cruzamentos[2]])
+
+def fss_bkt(L, Tc, a):
+    return Tc + a / (log(L)**2)
+
+#============================================================================# Ajuste dos parâmetros
+popt, pcov = curve_fit(
+    fss_bkt, redes_cross, cross,
+    sigma=err, absolute_sigma=True,
+    maxfev=100000)
+
+perr = sqrt(diag(pcov))
+Tc_fit, a_fit = popt
+redes_cross = array(redes_cross)
+#============================================================================# Gráfico
+
+# Eixo x: ln²(bL) = (ln L + b)²
+
+x_fit = 1 / ( log( redes_cross) ** 2 )
+
+x_plot = linspace(0.001, max(x_fit), 500)
+L_plot =  exp(sqrt(1 / x_plot))
+y_plot = fss_bkt(L_plot, *popt)
+
+# Gráfico
+fig, ax = plt.subplots(layout='constrained')
+ax.errorbar(x_fit, cross, yerr=err, fmt='o', capsize=5, color='black', label=rf'$L_{{\min}} = {Lmin}$')
+ax.plot(x_plot, y_plot, color='firebrick')
+
+ax.set(xlabel=r'$(\ln L)^{-2}$', ylabel=r'$T_{\mathrm{cross}}(L, L_{\min})$')
+ax.legend()
+ax.grid()
+plt.show()
+
+# Parâmetros ajustados
+print(f"Tc = {Tc_fit:.5f} ± {perr[0]:.5f}")
+print(f"a  = {a_fit:.5f} ± {perr[1]:.5f}")
+
+#@title Binder Cross SA
+#============================================================================#
+BC = []
+DPbc=[]
+#[8, 16, 32, 64, 128][6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
+redesBinderSA = [6, 8, 12, 16, 24, 32, 48]
+
+
+for l in redesBinderSA:
+    # Cumulante de Binder
+    with open(f'/content/drive/MyDrive/honey/L{l}/bc.{l}.dat', 'r') as f:
+        lines = [line.split() for line in f]
+
+    bc = array([float(line[1]) for line in lines])
+    dpbc = array([float(line[2]) for line in lines])
+
+    BC.append(bc)
+    DPbc.append(dpbc)
+BC = array(BC)
+DPbc = array(DPbc)
+#@title Gráfico Binder_cross SA
+#============================================================================# Gráfico
+legend_elements_W_SA = [
+    Line2D([0], [0], color='#1b9e77', label='L $=6$', marker='o', linestyle='-'),
+    Line2D([0], [0], color='#d95f02', label='L $=8$', marker='p', linestyle='--'),
+    Line2D([0], [0], color='#7570b3', label='L $=12$', marker='h', linestyle='-.'),
+    Line2D([0], [0], color='#e7298a', label='L $=16$', marker='^', linestyle=':'),
+    Line2D([0], [0], color='#66a61e', label='L $=24$', marker='v', linestyle=(0, (2, 1))),
+    Line2D([0], [0], color='#e6ab02', label='L $=32$', marker='<', linestyle=(0, (3, 5, 1, 5))),
+    Line2D([0], [0], color='#1f78b4', label='L $=48$', marker='>', linestyle=(0, (6, 2, 3, 2)))
+    ]
+
+linestyles = [
+    '-',
+    '--',
+    '-.',
+    ':',
+    (0, (2, 1)),
+    (0, (3, 5, 1, 5)),
+    (0, (6, 2, 3, 2))
+]
+
+markers  = ['o', 'p', 'h', '^','v', '<', '>']
+fig, ax = plt.subplots(layout='constrained', figsize=(10,8))
+ax.set(xlabel=r'$T$', ylabel=r'$B_M$', xlim=[0.498,0.66],ylim=[0.64,0.665])
+ax.grid()
+
+for data, dp, L, marker, color1, color2, color3, i in zip(BC, DPbc, redesBinderSA, markers, colors1, colors2, colors3, [1,2,3,4,5,6,7]):
+    min_len = min(len(t), len(data))
+    #ax.errorbar(t[:min_len], data[:min_len], yerr=dp, fmt=marker,capsize=4, color=color1, ecolor=color2, alpha=1)
+    ax.scatter(t[:min_len], data[:min_len], marker=marker, color=color1, alpha=1)
+for  wl, color, ls in zip(WL_BC, colors3, linestyles):
+    ax.plot(tWLbc, wl[0], color=color, linestyle=ls)
+ax.legend(handles=legend_elements_W_SA)
+plt.savefig("binderSAplusWL.pdf")
+plt.show()
+#@title Plascak SA
+# Armazenará os cruzamentos para cada rede mínima
+todos_cruzamentos = []
+
+for i in range(len(redesBinderSA) - 1):
+    L1 = redesBinderSA[i]
+    cruzamentos_L1 = []  # lista para armazenar cruzamentos com L1 como menor rede
+
+    for j in range(i + 1, len(redesBinderSA)):
+        L2 = redesBinderSA[j]
+
+        # Filtrar intervalo físico
+        valid_range = (temp >= 0.5) & (temp <= 0.6)
+        T_filt = temp[valid_range]
+        U1 = BC[i][valid_range]
+        U2 = BC[j][valid_range]
+        dU1 = DPbc[i][valid_range]
+        dU2 = DPbc[j][valid_range]
+
+        # Diferença entre cumulantes
+        diff = abs(U2 - U1)
+        idx_min = argmin(diff)
+
+        # Verificação de interpolação válida
+        if idx_min == 0 or idx_min >= len(T_filt) - 1:
+            print(f"Não foi possível interpolar entre L={L1} e L={L2}")
+            continue
+
+        # Interpolação linear entre pontos vizinhos
+        T1, T2 = T_filt[idx_min - 1], T_filt[idx_min + 1]
+        UL1_T1, UL1_T2 = U1[idx_min - 1], U1[idx_min + 1]
+        UL2_T1, UL2_T2 = U2[idx_min - 1], U2[idx_min + 1]
+
+        deltaT12 = T2 - T1
+        deltaUT1 = UL2_T1 - UL1_T1
+        deltaUT2 = UL2_T2 - UL1_T2
+
+        try:
+            Tcross = T2 - deltaUT2 / (deltaUT2 - deltaUT1) * deltaT12
+        except ZeroDivisionError:
+            print(f"Divisão por zero ao cruzar L={L1} e L={L2}")
+            continue
+
+        # Filtra cruzamentos fora da faixa física
+        if not (0.5 <= Tcross <= 0.6):
+            print(f"Tcross fora da faixa: {Tcross:.5f} entre L={L1} e L={L2}")
+            continue
+        erro = abs(deltaT12) * 0.5  # Erro grosseiro (melhorável)
+        cruzamentos_L1.append((L1, L2, Tcross, erro))
+
+    todos_cruzamentos.append(cruzamentos_L1)
+
+#@title Cruzamentos SA
+for i, cruzamentos in enumerate(todos_cruzamentos):
+    L1 = redesBinderSA[i]
+    print(f"\nCruzamentos com L={L1}:")
+    for (L1, L2, Tcross, erro) in cruzamentos:
+        print(f"  L={L1} vs L={L2} → Tc = {Tcross:.5f} ± {erro:.5f}")
+#@title FSS Beta_cross
+#============================================================================# Dados
+Lmin6=[1.706, 1.728, 1.720, 1.732, 1.726, 1.722, 1.729, 1.722, 1.724]
+Lmin8=[1.740, 1.724, 1.737, 1.730, 1.724, 1.722, 1.722, 1.726]
+Lmin12=[1.716, 1.735, 1.725, 1.721, 1.726, 1.721, 1.723]
+Lmin16=[1.748, 1.734, 1.724, 1.729, 1.722, 1.727]
+Lmin24=[1.694, 1.718, 1.721, 1.719, 1.721]
+
+RedesFSSbc = [ 8, 12, 16, 24, 32, 48, 64, 96, 128]
+
+#============================================================================# Gráfico
+plt.rcParams['font.size'] = 35
+fig, ax = plt.subplots(layout='constrained',figsize=(16,10))
+# Plots
+ax.plot(RedesFSSbc, Lmin6, 'o--',label=r'$L_{min} = 6$', alpha=1, color='brown', markersize=9, linewidth=2)
+ax.plot(RedesFSSbc[1:], Lmin8, 'p--',label=r'$L_{min} = 8$', alpha=1, color='orange', markersize=9, linewidth=2)
+ax.plot(RedesFSSbc[2:], Lmin12, '^--',label=r'$L_{min} = 12$', alpha=1, color='g', markersize=9, linewidth=2)
+ax.plot(RedesFSSbc[3:], Lmin16, 'v--',label=r'$L_{min} = 16$', alpha=1, color='navy', markersize=9, linewidth=2)
+ax.plot(RedesFSSbc[4:], Lmin24, '<--',label=r'$L_{min} = 24$', alpha=1, color='c', markersize=9, linewidth=2)
+
+ax.axhline(y=1.685, linestyle='--', color='red',linewidth=2)
+ax.text(18, 1.687, r'$\beta_{BKT} (\Upsilon)$', fontsize=25, color='red')
+
+ax.axhline(y=1.627, linestyle='--', color='red',linewidth=2)
+ax.text(18, 1.629, r'$\beta_{BKT} (\Upsilon_4)$', fontsize=25, color='red')
+# Config
+ax.set(xlabel=r'$L$', ylabel=r'$\beta_{cross}$')
+ax.legend(loc='lower right')
+ax.grid()
+plt.savefig("Fss_Binder.pdf")
+plt.show()
+# Redes
+
+#@title Vortex finder
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+def get_hexagon(k, l, L):
+    """
+    Retorna os 6 pontos que formam um hexágono em torno de (k, l)
+    com condições de contorno periódicas para rede honeycomb.
+    """
+    hexagon = [
+        (k, l),
+        ((k + 1) % L, l),
+        ((k + 1) % L, (l + 1) % L),
+        (k, (l + 1) % L),
+        ((k - 1) % L, (l + 1) % L),
+        ((k - 1) % L, l)
+    ]
+    return hexagon
+
+L = 128
+for seed in range(6):
+    print(f'-------------------------------------- seed: {seed}')
+    # Load your data, splitting it into frames
+    with open(f'/content/drive/MyDrive/honey/L128/anim.128.41642{seed}.dat', 'r') as f:
+        frames = f.read().split('\n\n')
+    # Remove empty frames that may occur due to extra blank lines
+    frames = [frame for frame in frames if frame.strip()]
+    # Convert each frame into a numpy array
+    data = [np.array([list(map(float, line.split())) for line in frame.split('\n') if line.strip()]) for frame in frames]
+
+    # Start plot
+    fig, axs = plt.subplots(2,3,layout='constrained', figsize=(18,10))
+    lista = ["a","b","c","d","e","f"]
+    # Frames
+    nums = [190,172,164,156,131,100]
+
+    #=============================================================================#
+    # Data processing
+    coordenadas = []
+    for i, num in enumerate(nums):
+        # Get data from specific frame
+        df = pd.DataFrame(data[num], columns=['x', 'y', 'xh', 'yh', 'cos', 'sen'])
+        df['x'] = df['x'].astype(int) - 1
+        df['y'] = df['y'].astype(int) - 1
+        df = df.sort_values(by=['x', 'y'])
+        dados_ordenados = df.to_numpy()
+
+        # Coordinates and angles
+        x = dados_ordenados[:, 0]
+        y = dados_ordenados[:, 1]
+        xh = dados_ordenados[:, 2]
+        yh = dados_ordenados[:, 3]
+        cos = dados_ordenados[:, 4]
+        sin = dados_ordenados[:, 5]
+        theta = { (x[k], y[k]): np.arctan2(sin[k], cos[k]) for k in range(len(x)) }
+
+
+        # Vortex finder
+        vortex_list = []
+        for k in range(L):
+            for l in range(L):
+                if (k + l) % 2 == 1:
+                    continue  # only processes valid hexagons (a sublattice)
+                neighbors = get_hexagon(k, l, L)
+                theta_neighbors = [theta.get(site, 0) for site in neighbors]
+                delta_theta = sum(np.angle(np.exp(1j * (theta_neighbors[(j + 1) % 6] - theta_neighbors[j]))) for j in range(6))
+
+                # Cartesian coordinates of the center of the hexagon
+                try:
+                    xc = xh[(x == k) & (y == l)][0]
+                    yc = yh[(x == k) & (y == l)][0] + (np.sqrt(3)/3)
+                except IndexError:
+                    continue  # ignore if position is not set
+
+                if abs(delta_theta - 2*np.pi) < 1e-5:
+                    vortex_list.append((+1, xc, yc))
+                elif abs(delta_theta + 2*np.pi) < 1e-5:
+                    vortex_list.append((-1, xc, yc))
+
+        # Separate vortices and antivortices
+        vortex_coords = np.array([(x, y) for q, x, y in vortex_list if q == +1])
+        antivortex_coords = np.array([(x, y) for q, x, y in vortex_list if q == -1])
+
+        # array converter
+        vortex_coords = np.array(vortex_coords)
+        antivortex_coords = np.array(antivortex_coords)
+
+        # Create the subplots
+        ax = axs[i // 3, i % 3]
+        ax.set_title(f'({lista[i]})')
+
+        # Arrows config
+        ax.quiver(xh, yh, cos, sin, angles='xy', pivot='mid', scale_units='xy', scale=1.6, width=0.0025, headwidth=3, color='gray')
+
+        # Add vortex and antivortex markings to the center of the hexagon
+        if len(vortex_coords) > 0:
+            ax.scatter(vortex_coords[:, 0], vortex_coords[:, 1], color='red', marker='*', s=3, label='Vortex')
+        if len(antivortex_coords) > 0:
+            ax.scatter(antivortex_coords[:, 0], antivortex_coords[:, 1], color='blue', marker='o', s=3, label='Antivortex')
+
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.legend(loc='upper right', fontsize=8)
+
+    plt.savefig(f"configsvortex_semente_{seed}.pdf")
+    plt.show()
+
+#@title Densidade de vórtice (forma antiga de se achar o vórtice)
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+#=================================================================================#
+L = 128
+vortex_density_all = []
+density_std = []
+for s in range(6):
+    #=============================================================================#
+    # Separating the data
+    file_path = f'/content/drive/MyDrive/honey/L{L}/anim.{L}.41642{s}.dat'
+
+    with open(file_path, 'r') as f:
+        frames = f.read().split('\n\n')
+    # Remove empty frames
+    frames = [frame for frame in frames if frame.strip()]
+    data = [np.array([list(map(float, line.split())) for line in frame.split('\n') if line.strip()])for frame in frames]
+
+    #=============================================================================#
+    # Data processing
+    vortex_density_values = []
+    for num in range(min(191, len(data))-1, -1, -1):
+        #=========================================================================#
+        # Organizing data using pandas
+        df = pd.DataFrame(data[num], columns=['x', 'y', 'xh', 'yh', 'cos', 'sen'])
+        df['x'] = df['x'].astype(int)
+        df['y'] = df['y'].astype(int)
+        df['ordem'] = df['x'] * 48 + df['y']
+        df = df.sort_values('ordem')
+        df = df.drop(columns=['ordem'])
+        dados_ordenados = df.to_numpy()
+        #=========================================================================#
+        x = dados_ordenados[:, 0] - 1
+        y = dados_ordenados[:, 1] - 1
+        cos = dados_ordenados[:, 4]
+        sin = dados_ordenados[:, 5]
+        #=========================================================================#
+        # Create a dictionary to store the spin angles
+        theta = {}
+        for k in range(len(x)):
+            theta[(x[k], y[k])] = np.arctan2(sin[k], cos[k])
+        #=========================================================================#
+        # Vortex counter
+        vortex_count = 0
+        for k in range(1, L, 2):  # Only go through odd lines
+            for l in range(0, L, 2):  # Only go through even columns
+                neighbors = [
+                    (k, l),
+                    ((k-1) % L, l),
+                    ((k-1) % L, (l+1) % L),
+                    (k, (l+1) % L),
+                    ((k-1) % L, (l-1) % L),
+                    (k, (l-1) % L)
+                ]
+                #=================================================================#
+                theta_neighbors = [theta.get(neighbor, 0) for neighbor in neighbors]
+                # Calculate the phase circulation within the hexagon
+                delta_theta = sum(np.angle(np.exp(1j * (theta_neighbors[(j+1) % 6] - theta_neighbors[j]))) for j in range(6))
+                #=================================================================#
+                # If the sum of the phase jumps is equal to 2π (or -2π), there is a vortex (or antivortex)
+                if abs(delta_theta - 2*np.pi) < 1e-5 or abs(delta_theta + 2*np.pi) < 1e-5:
+                    vortex_count += 1
+        for k in range(0, L, 2):  # Only go through even lines
+            for l in range(1, L, 2):  # Only go through ODD columns
+                neighbors = [
+                    (k, l),
+                    ((k-1) % L, l),
+                    ((k-1) % L, (l+1) % L),
+                    (k, (l+1) % L),
+                    ((k-1) % L, (l-1) % L),
+                    (k, (l-1) % L)
+                ]
+                #=================================================================#
+                theta_neighbors = [theta.get(neighbor, 0) for neighbor in neighbors]
+                # Calculate the phase circulation within the hexagon
+                delta_theta = sum(np.angle(np.exp(1j * (theta_neighbors[(j+1) % 6] - theta_neighbors[j]))) for j in range(6))
+                #=================================================================#
+                # If the sum of the phase jumps is equal to 2π (or -2π), there is a vortex (or antivortex)
+                if abs(delta_theta - 2*np.pi) < 1e-5 or abs(delta_theta + 2*np.pi) < 1e-5:
+                    vortex_count += 1
+        #=========================================================================#
+        # Calculate vortex density
+        vortex_density = vortex_count / (L * L)
+        vortex_density_values.append(vortex_density)
+    #=============================================================================#
+    # Stores the list of vortex density values ​​for each network
+    vortex_density_all.append(vortex_density_values)
+
+#=================================================================================#
+# Calculates the average value of the vortex density
+vortex_density_all = np.array(vortex_density_all)
+vortex_density_mean = np.mean(vortex_density_all, axis=0)
+density_std = np.std(vortex_density_all, axis=0)
+#=============================================================================#
+#@title Vortex density
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+#=================================================================================#
+# Function to get the hexagon vertices
+def get_hexagon(k, l, L):
+    hexagon = [
+        (k, l),
+        ((k + 1) % L, l),
+        ((k + 1) % L, (l + 1) % L),
+        (k, (l + 1) % L),
+        ((k - 1) % L, (l + 1) % L),
+        ((k - 1) % L, l)
+    ]
+    return hexagon
+#=================================================================================#
+L = 128 # Lattice
+vortex_density_all = []
+densiy_std = []
+for s in range(6): # Only 6 seeds
+    #=============================================================================#
+    # Separating the data
+    file_path = f'/content/drive/MyDrive/honey/L{L}/anim.{L}.41642{s}.dat'
+
+    with open(file_path, 'r') as f:
+        frames = f.read().split('\n\n')
+    # Remove empty frames
+    frames = [frame for frame in frames if frame.strip()]
+    data = [np.array([list(map(float, line.split())) for line in frame.split('\n') if line.strip()])for frame in frames]
+
+    #=============================================================================#
+    # Data processing
+    vortex_density_values = []
+    for num in range(min(191, len(data))-1, -1, -1):
+        #=========================================================================#
+        # Get data from specific frame
+        df = pd.DataFrame(data[num], columns=['x', 'y', 'xh', 'yh', 'cos', 'sen'])
+        df['x'] = df['x'].astype(int) - 1
+        df['y'] = df['y'].astype(int) - 1
+        df = df.sort_values(by=['x', 'y'])
+        dados_ordenados = df.to_numpy()
+
+        # Coordinates and angles
+        x = dados_ordenados[:, 0]
+        y = dados_ordenados[:, 1]
+        xh = dados_ordenados[:, 2]
+        yh = dados_ordenados[:, 3]
+        cos = dados_ordenados[:, 4]
+        sin = dados_ordenados[:, 5]
+        theta = { (x[k], y[k]): np.arctan2(sin[k], cos[k]) for k in range(len(x)) }
+        # Vortex counter (uses proper hexagon definition)
+        vortex_list = []
+        for k in range(L):
+            for l in range(L):
+                if (k + l) % 2 == 1:
+                    continue  # only valid hexagon centers
+                neighbors = get_hexagon(k, l, L)
+                theta_neighbors = [theta.get(site, 0) for site in neighbors]
+                delta_theta = sum(np.angle(np.exp(1j * (theta_neighbors[(j + 1) % 6] - theta_neighbors[j]))) for j in range(6))
+
+                if abs(delta_theta - 2*np.pi) < 1e-3:
+                    vortex_list.append((+1, k, l))
+                elif abs(delta_theta + 2*np.pi) < 1e-3:
+                    vortex_list.append((-1, k, l))
+
+        # Densidade = número de vórtices detectados dividido pela área da rede
+        vortex_density = len(vortex_list) / (L * L)
+        vortex_density_values.append(vortex_density)
+    #=============================================================================#
+    # Stores the list of vortex density values ​​for each network
+    vortex_density_all.append(vortex_density_values)
+#=================================================================================#
+# Calculates the average value of the vortex density
+vortex_density_all = np.array(vortex_density_all)
+vortex_density_mean = np.mean(vortex_density_all, axis=0)
+# Calculates the standard deviation of the vortex density
+vortex_density_std = np.std(vortex_density_all, axis=0)
+#=============================================================================#
+def afim(x,m,b):
+    return m*x + b
+
+umsobret = 1/temp
+mlnro = -log(vortex_density_mean)
+# Pega os pontos ao redor do mínimo
+xlinha = umsobret[11:48]
+ylinha = mlnro[11:48]
+# Ajusta uma parábola aos pontos
+popt, pcov = curve_fit(afim, xlinha, ylinha)
+m = popt[0]
+erro_m = sqrt(pcov[0, 0])
+print(f"2μ =  {m:.5f} ± {erro_m:.5f} ")
+#=================================================================================#
+# Gráfico
+fig, ax = plt.subplots(layout='constrained')
+ax.scatter(1/temp, -log(vortex_density_mean), marker='H', color='gold',edgecolors='darkorange', s=50)
+ax.plot(1/temp, m*(1/temp)+popt[1], color='black', alpha=0.6)
+ax.set(xlabel=r'1/T', ylabel=r'$-\ln \rho$', xlim=[1.4,1.8], ylim=[3,6])
+
+# Configs
+ax.grid()
+plt.show()
+#=================================================================================#
+# Gráfico
+fig, ax = plt.subplots(layout='constrained')
+ax.scatter(temp, vortex_density_mean, marker='H', color='gold', edgecolors='darkorange', s=50)
+ax.set(xlabel=r'T', ylabel=r'$\rho$', xlim=[0.4,4], ylim=[-0.01,0.2])
+
+# Seta indicando a T_BKT
+plt.arrow(x=0.5759045921228544, y=0.06, dx=0, dy=-0.03, head_width=0.04, head_length=0.01, color='black')
+plt.annotate(r'$T_{\rm BKT}$', xy=(0.45, 0.065))
+
+# Configurações finais
+ax.grid()
+
+#=================================================================================#
+# Adicionando o gráfico menor
+axins = ax.inset_axes([0.545, 0.28, 0.445, 0.445])
+axins.scatter(1/temp, -log(vortex_density_mean), marker='H', color='gold',edgecolors='darkorange', s=50)
+axins.plot(1/temp, m*(1/temp)+popt[1], color='black', alpha=0.6)
+axins.set(xlabel=r'1/T', ylabel=r'$-\ln \rho$', xlim=[1.4,1.8], ylim=[3,6])
+axins.grid()
+
+
+
+plt.savefig("vortex_density.pdf")
+plt.show()
